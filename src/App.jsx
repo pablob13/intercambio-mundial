@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -1129,12 +1129,12 @@ function MainApp({ session, onLogout }) {
     const estimatedCost = packsOpened * 25; // 25 MXN por sobre
 
     const achievements = [
-      { id: 'first_blood', title: 'Primera Estampa', icon: '🎯', condition: ownedStampsCount > 0, desc: 'Pegaste tu primera estampa.', progressText: `${Math.min(ownedStampsCount, 1)} / 1` },
-      { id: 'first_team', title: 'Conquistador', icon: '🌍', condition: TEAMS.some(t => { const teamStamps = stamps.filter(s => s.teamCode === t.code); return teamStamps.length > 0 && teamStamps.every(s => s.count > 0); }), desc: 'Completaste tu primer país.', progressText: `${TEAMS.filter(t => { const teamStamps = stamps.filter(s => s.teamCode === t.code); return teamStamps.length > 0 && teamStamps.every(s => s.count > 0); }).length > 0 ? '1' : '0'} / 1` },
-      { id: 'collector', title: 'Coleccionista', icon: '📦', condition: ownedStampsCount >= 100, desc: 'Llegaste a 100 estampas pegadas.', progressText: `${Math.min(ownedStampsCount, 100)} / 100` },
-      { id: 'trader', title: 'Negociador', icon: '🤝', condition: tradeGiven.length > 0 || tradeReceived.length > 0, desc: 'Comenzaste a planear intercambios.', progressText: `${(tradeGiven.length > 0 || tradeReceived.length > 0) ? '1' : '0'} / 1` },
-      { id: 'social', title: 'Amigable', icon: '🗣️', condition: (friendsData?.length || 0) >= 3, desc: 'Tienes 3 o más amigos en la comunidad.', progressText: `${Math.min((friendsData?.length || 0), 3)} / 3` },
-      { id: 'pro', title: 'Miembro PRO', icon: '👑', condition: isPro, desc: 'Te uniste al club exclusivo PRO.', progressText: isPro ? '1 / 1' : '0 / 1' }
+      { id: 'first_blood', title: 'Primera Estampa', icon: Target, color: '#3b82f6', condition: ownedStampsCount > 0, desc: 'Pegaste tu primera estampa.', progressText: `${Math.round((Math.min(ownedStampsCount, 1) / 1) * 100)}%` },
+      { id: 'first_team', title: 'Conquistador', icon: Globe, color: '#10b981', condition: TEAMS.some(t => { const teamStamps = stamps.filter(s => s.teamCode === t.code); return teamStamps.length > 0 && teamStamps.every(s => s.count > 0); }), desc: 'Completaste tu primer país.', progressText: `${Math.round(((TEAMS.filter(t => { const teamStamps = stamps.filter(s => s.teamCode === t.code); return teamStamps.length > 0 && teamStamps.every(s => s.count > 0); }).length > 0) ? 1 : 0) * 100)}%` },
+      { id: 'collector', title: 'Coleccionista', icon: Package, color: '#8b5cf6', condition: ownedStampsCount >= 100, desc: 'Llegaste a 100 estampas pegadas.', progressText: `${Math.round((Math.min(ownedStampsCount, 100) / 100) * 100)}%` },
+      { id: 'trader', title: 'Negociador', icon: Handshake, color: '#f59e0b', condition: tradeGiven.length > 0 || tradeReceived.length > 0, desc: 'Comenzaste a planear intercambios.', progressText: `${(tradeGiven.length > 0 || tradeReceived.length > 0) ? 100 : 0}%` },
+      { id: 'social', title: 'Amigable', icon: Users, color: '#ef4444', condition: (friendsData?.length || 0) >= 3, desc: 'Tienes 3 o más amigos en la comunidad.', progressText: `${Math.round((Math.min((friendsData?.length || 0), 3) / 3) * 100)}%` },
+      { id: 'pro', title: 'Miembro PRO', icon: Crown, color: '#FFD700', condition: isPro, desc: 'Te uniste al club exclusivo PRO.', progressText: isPro ? '100%' : '0%' }
     ];
 
     return (
@@ -1243,7 +1243,9 @@ function MainApp({ session, onLogout }) {
               onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
               >
-                <div style={{ fontSize: '2rem', marginBottom: '5px' }}>{a.icon}</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+                  <a.icon size={32} color={a.condition ? a.color : '#94a3b8'} />
+                </div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? 'var(--text-main)' : 'var(--text-muted)' }}>{a.title}</div>
               </div>
             ))}
@@ -2601,8 +2603,8 @@ function MainApp({ session, onLogout }) {
               <h2 style={{ margin: 0 }}>Detalle de Logro</h2>
               <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setSelectedAchievement(null)} />
             </div>
-            <div style={{ fontSize: '4rem', marginBottom: '10px', filter: selectedAchievement.condition ? 'none' : 'grayscale(100%)', opacity: selectedAchievement.condition ? 1 : 0.5 }}>
-              {selectedAchievement.icon}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', filter: selectedAchievement.condition ? 'none' : 'grayscale(100%)', opacity: selectedAchievement.condition ? 1 : 0.5 }}>
+              <selectedAchievement.icon size={64} color={selectedAchievement.color} />
             </div>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.5rem', color: selectedAchievement.condition ? 'var(--primary)' : 'var(--text-main)' }}>
               {selectedAchievement.title}
