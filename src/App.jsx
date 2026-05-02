@@ -213,6 +213,14 @@ const generateInitialStamps = () => {
   return initial;
 };
 
+const isEscudo = (id) => {
+  if (!id) return false;
+  const parts = id.split(' ');
+  const code = parts[0];
+  const num = parts[1];
+  return num === '1' && code !== 'FWC' && code !== 'CC';
+};
+
 const AdBanner = ({ isPro, format = 'horizontal' }) => {
   if (isPro) return null; // PRO users never see ads
   
@@ -639,6 +647,7 @@ function MainApp({ session, onLogout }) {
   
   // Trade Modal State
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [tradeOnlyEscudos, setTradeOnlyEscudos] = useState(false);
   const [tradeGiven, setTradeGiven] = useState([]); 
   const [tradeReceived, setTradeReceived] = useState([]);
   const [tradeGivenTeam, setTradeGivenTeam] = useState('');
@@ -1168,6 +1177,9 @@ function MainApp({ session, onLogout }) {
     const faltantesTotales = stamps.length - ownedStampsCount;
     const repetidasTotales = stamps.reduce((acc, s) => acc + (s.count > 1 ? s.count - 1 : 0), 0);
     const amigosAgregados = friendsData?.length || 0;
+    
+    const escudosOwned = stamps.filter(s => isEscudo(s.id) && s.count > 0).length;
+    const totalEscudos = stamps.filter(s => isEscudo(s.id)).length;
 
     const achievements = [
       { id: 'first_blood', title: 'Primera Estampa', icon: Target, color: '#3b82f6', condition: ownedStampsCount > 0, desc: 'Pegaste tu primera estampa.', progressText: `${Math.round((Math.min(ownedStampsCount, 1) / 1) * 100)}%` },
@@ -1343,6 +1355,10 @@ function MainApp({ session, onLogout }) {
             <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{faltantesTotales}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Faltantes</div>
+            </div>
+            <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)', gridColumn: 'span 2' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3b82f6' }}>{escudosOwned} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>/ {totalEscudos}</span></div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Escudos Pegados</div>
             </div>
           </div>
           
@@ -1903,7 +1919,7 @@ function MainApp({ session, onLogout }) {
                         style={isSelected ? { borderColor: 'white', transform: 'scale(1.1)', zIndex: 1, boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}}
                         onClick={() => setTradeGiveSelection(prev => isSelected ? prev.filter(id => id !== s.id) : [...prev, s.id])}
                       >
-                        <span className="stamp-id">{s.teamCode}<br/>{s.number}</span>
+                        <span className="stamp-id">{s.teamCode}<br/>{s.number} {isEscudo(s.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}</span>
                       </button>
                     )
                   })}
@@ -1922,7 +1938,7 @@ function MainApp({ session, onLogout }) {
                         style={isSelected ? { borderColor: 'white', transform: 'scale(1.1)', zIndex: 1, boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}}
                         onClick={() => setTradeReceiveSelection(prev => isSelected ? prev.filter(id => id !== s.id) : [...prev, s.id])}
                       >
-                        <span className="stamp-id">{s.teamCode}<br/>{s.number}</span>
+                        <span className="stamp-id">{s.teamCode}<br/>{s.number} {isEscudo(s.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}</span>
                       </button>
                     )
                   })}
@@ -2468,7 +2484,7 @@ function MainApp({ session, onLogout }) {
                               style={{ zIndex: 1, ...(isSelected ? { borderColor: 'white', transform: 'scale(1.1)', boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}) }} 
                               onClick={() => handleStampClick(stamp)}
                             >
-                              <span className="stamp-id">{stamp.teamCode}<br/>{stamp.number}</span>
+                              <span className="stamp-id">{stamp.teamCode}<br/>{stamp.number} {isEscudo(stamp.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}</span>
                               {stamp.count > 1 && <div className="badge duplicate">+{stamp.count - 1}</div>}
                               {stamp.count === 1 && <div className="badge"><Check size={12} /></div>}
                             </button>
@@ -2558,6 +2574,12 @@ function MainApp({ session, onLogout }) {
               <h2 style={{ margin: 0, color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '8px' }}><Handshake size={28} /> Pactar Intercambio</h2>
               <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setIsTradeModalOpen(false)} />
             </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px', backgroundColor: 'var(--panel-bg)', padding: '10px', borderRadius: '8px' }}>
+              <input type="checkbox" id="tradeOnlyEscudos" checked={tradeOnlyEscudos} onChange={(e) => setTradeOnlyEscudos(e.target.checked)} style={{ transform: 'scale(1.2)' }} />
+              <label htmlFor="tradeOnlyEscudos" style={{ cursor: 'pointer', fontSize: '0.9rem' }}>🛡️ Solo intercambiar Escudo por Escudo</label>
+            </div>
+            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
               <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)', padding: '15px', borderRadius: '12px', border: '1px solid var(--border)' }}>
                 <h3 style={{ marginBottom: '10px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2580,20 +2602,20 @@ function MainApp({ session, onLogout }) {
                 
                 {tradeGivenTeam && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', maxHeight: '150px', overflowY: 'auto', paddingRight: '5px' }}>
-                    {stamps.filter(s => s.count > 1 && s.teamCode === tradeGivenTeam).map(s => {
+                    {stamps.filter(s => s.count > 1 && s.teamCode === tradeGivenTeam && (!tradeOnlyEscudos || isEscudo(s.id))).map(s => {
                       const maxAvailable = s.count - 1;
                       const currentlySelected = tradeGiven.filter(tg => tg.id === s.id).length;
                       const canAdd = currentlySelected < maxAvailable;
                       
                       return (
                         <button key={s.id} onClick={() => { if (canAdd) addToTradeGiven(s); }} disabled={!canAdd} style={{ background: canAdd ? 'var(--primary)' : 'var(--panel-bg)', color: canAdd ? 'white' : 'var(--text-muted)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: '8px', cursor: canAdd ? 'pointer' : 'not-allowed', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '50px' }}>
-                          <span style={{ fontWeight: 'bold' }}>{s.number}</span>
+                          <span style={{ fontWeight: 'bold' }}>{s.number} {isEscudo(s.id) && '🛡️'}</span>
                           <span style={{ fontSize: '0.7rem' }}>Disp: {maxAvailable - currentlySelected}</span>
                         </button>
                       );
                     })}
-                    {stamps.filter(s => s.count > 1 && s.teamCode === tradeGivenTeam).length === 0 && (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No tienes repetidas de este país.</span>
+                    {stamps.filter(s => s.count > 1 && s.teamCode === tradeGivenTeam && (!tradeOnlyEscudos || isEscudo(s.id))).length === 0 && (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No tienes {tradeOnlyEscudos ? 'escudos' : 'estampas'} repetidas de este país.</span>
                     )}
                   </div>
                 )}
@@ -2619,18 +2641,18 @@ function MainApp({ session, onLogout }) {
 
                 {tradeReceivedTeam && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', maxHeight: '150px', overflowY: 'auto', paddingRight: '5px' }}>
-                    {stamps.filter(s => s.count === 0 && s.teamCode === tradeReceivedTeam).map(s => {
+                    {stamps.filter(s => s.count === 0 && s.teamCode === tradeReceivedTeam && (!tradeOnlyEscudos || isEscudo(s.id))).map(s => {
                       const currentlySelected = tradeReceived.filter(tr => tr.id === s.id).length;
                       const canAdd = currentlySelected === 0;
                       
                       return (
                         <button key={s.id} onClick={() => { if (canAdd) addToTradeReceived(s); }} disabled={!canAdd} style={{ background: canAdd ? 'var(--success)' : 'var(--panel-bg)', color: canAdd ? 'white' : 'var(--text-muted)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: '8px', cursor: canAdd ? 'pointer' : 'not-allowed', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '50px' }}>
-                          <span style={{ fontWeight: 'bold' }}>{s.number}</span>
+                          <span style={{ fontWeight: 'bold' }}>{s.number} {isEscudo(s.id) && '🛡️'}</span>
                         </button>
                       );
                     })}
-                    {stamps.filter(s => s.count === 0 && s.teamCode === tradeReceivedTeam).length === 0 && (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No te faltan estampas de este país.</span>
+                    {stamps.filter(s => s.count === 0 && s.teamCode === tradeReceivedTeam && (!tradeOnlyEscudos || isEscudo(s.id))).length === 0 && (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No te faltan {tradeOnlyEscudos ? 'escudos' : 'estampas'} de este país.</span>
                     )}
                   </div>
                 )}
