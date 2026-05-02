@@ -656,6 +656,8 @@ function MainApp({ session, onLogout }) {
       text += `${teamCode}: ${grouped[teamCode].join(', ')}\n`;
     });
     
+    text += `\n⚽ Para hacer intercambios y saber mis faltantes, únete a la comunidad en mundialestampas.com`;
+    
     navigator.clipboard.writeText(text).then(() => {
       alert("¡Lista de repetidas copiada al portapapeles! Ya puedes pegarla en WhatsApp.");
     });
