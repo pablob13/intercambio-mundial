@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -2992,6 +2992,12 @@ function MainApp({ session, onLogout }) {
               <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setScannerMode(null)} />
             </div>
             <p style={{ color: 'var(--text-muted)' }}>Elige cómo quieres escanear tus estampas.</p>
+            <div style={{ backgroundColor: 'rgba(255,193,7,0.1)', border: '1px solid var(--warning)', borderRadius: '8px', padding: '10px', marginTop: '10px', fontSize: '0.85rem', color: 'var(--warning)', display: 'flex', alignItems: 'flex-start', gap: '8px', textAlign: 'left' }}>
+              <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <strong>Versión Beta:</strong> El escáner de estampas aún está en desarrollo. Los resultados pueden tener imprecisiones. Estamos trabajando para mejorarlo continuamente.
+              </div>
+            </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
               <button className="btn btn-primary" onClick={() => setScannerMode('page_setup')} style={{ padding: '15px' }}>
