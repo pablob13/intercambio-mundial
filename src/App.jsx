@@ -226,6 +226,20 @@ const AdBanner = ({ isPro, format = 'horizontal' }) => {
   );
 };
 
+const ProPaywall = ({ featureName, description, onUpgrade }) => (
+  <div className="tab-content fade-in" style={{ padding: '20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '60vh' }}>
+    <div style={{ backgroundColor: 'rgba(255, 215, 0, 0.1)', padding: '30px', borderRadius: '16px', border: '1px solid #FFD700', margin: '20px auto', maxWidth: '400px' }}>
+      <Crown size={64} color="#FFD700" style={{ marginBottom: '20px', display: 'inline-block' }} />
+      <h2 style={{ margin: '0 0 15px 0', color: '#FFD700' }}>Función Exclusiva PRO</h2>
+      <h3 style={{ margin: '0 0 15px 0', color: 'var(--text-main)' }}>{featureName}</h3>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '30px', lineHeight: '1.6', fontSize: '0.95rem' }}>{description}</p>
+      <button className="btn btn-primary" style={{ backgroundColor: '#FFD700', color: 'black', fontWeight: 'bold', width: '100%', padding: '15px', justifyContent: 'center' }} onClick={onUpgrade}>
+        <Star size={18} style={{ marginRight: '8px' }} /> Ver Planes PRO
+      </button>
+    </div>
+  </div>
+);
+
 function MainApp({ session, onLogout }) {
   const isCloud = true;
   const userName = session?.user?.user_metadata?.full_name || session?.user?.email;
@@ -242,6 +256,7 @@ function MainApp({ session, onLogout }) {
   const [newMessage, setNewMessage] = useState('');
   
   const [isPro, setIsPro] = useState(false);
+  const [paywallFeature, setPaywallFeature] = useState(null);
   const [groups, setGroups] = useState([]);
   const [communityTab, setCommunityTab] = useState('explorar');
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -936,7 +951,13 @@ function MainApp({ session, onLogout }) {
           );
         })}
 
-        <button className="btn btn-secondary" style={{ padding: '15px', justifyContent: 'center', borderStyle: 'dashed', marginTop: '10px' }} onClick={() => setIsCreateAlbumModalOpen(true)}>
+        <button className="btn btn-secondary" style={{ padding: '15px', justifyContent: 'center', borderStyle: 'dashed', marginTop: '10px' }} onClick={() => {
+          if (albumsState.albums.length >= 1 && !isPro) {
+            setPaywallFeature({ title: 'Múltiples Álbumes Simultáneos', description: 'Los usuarios gratuitos solo pueden gestionar 1 álbum a la vez. Actualízate a PRO para agregar y gestionar álbumes ilimitados.' });
+          } else {
+            setIsCreateAlbumModalOpen(true);
+          }
+        }}>
           <PlusCircle size={20} />
           Crear Nuevo Álbum
         </button>
@@ -1760,12 +1781,24 @@ function MainApp({ session, onLogout }) {
       </div>
 
       <div className="actions-bar">
-        <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setScannerMode('menu')}>
+        <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => {
+          if (!isPro) {
+            setPaywallFeature({ title: 'Escáner Inteligente', description: 'Detecta automáticamente tus estampas repetidas usando la cámara o galería. Ahorra horas de captura manual.' });
+          } else {
+            setScannerMode('menu');
+          }
+        }}>
           <Camera size={20} />
           Escanear IA
         </button>
         
-        <button className="btn btn-secondary" style={{ flex: 1, justifyContent: 'center', borderColor: 'var(--warning)', color: 'var(--warning)' }} onClick={() => setIsTradeModalOpen(true)}>
+        <button className="btn btn-secondary" style={{ flex: 1, justifyContent: 'center', borderColor: 'var(--warning)', color: 'var(--warning)' }} onClick={() => {
+          if (!isPro) {
+            setPaywallFeature({ title: 'Pactar Intercambio', description: 'Registra, organiza y visualiza todas tus negociaciones de estampas en un solo lugar.' });
+          } else {
+            setIsTradeModalOpen(true);
+          }
+        }}>
           <Handshake size={20} /> Pactar Intercambio
         </button>
 
@@ -1948,27 +1981,45 @@ function MainApp({ session, onLogout }) {
   return (
     <div className={`app-container ${albumsState?.theme === 'mexico' ? 'theme-mexico' : ''}`}>
       <div className="main-content-scroll">
-        {activeTab === 'collection' && renderCollectionTab()}
-        {activeTab === 'albums' && renderAlbumsTab()}
-        {activeTab === 'friends' && renderFriendsTab()}
-        {activeTab === 'profile' && renderProfileTab()}
+        {paywallFeature ? (
+          <ProPaywall 
+            featureName={paywallFeature.title} 
+            description={paywallFeature.description} 
+            onUpgrade={() => { setPaywallFeature(null); setActiveTab('profile'); }} 
+          />
+        ) : (
+          <>
+            {activeTab === 'collection' && renderCollectionTab()}
+            {activeTab === 'albums' && renderAlbumsTab()}
+            {activeTab === 'friends' && renderFriendsTab()}
+            {activeTab === 'profile' && renderProfileTab()}
+          </>
+        )}
       </div>
 
       <nav className="bottom-nav">
-        <button className={`nav-item ${activeTab === 'collection' ? 'active' : ''}`} onClick={() => setActiveTab('collection')}>
+        <button className={`nav-item ${activeTab === 'collection' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('collection'); setPaywallFeature(null); }}>
           <BookOpen size={24} />
           <span>Colección</span>
         </button>
-        <button className={`nav-item ${activeTab === 'friends' ? 'active' : ''}`} onClick={() => { setActiveTab('friends'); setSelectedFriend(null); }} style={{ position: 'relative' }}>
+        <button className={`nav-item ${activeTab === 'friends' && !paywallFeature ? 'active' : ''}`} onClick={() => { 
+          if (!isPro) {
+            setPaywallFeature({ title: 'Comunidad', description: 'Únete a grupos, chatea con coleccionistas, descubre quién tiene las estampas que te faltan y pacta intercambios automáticamente.' });
+          } else {
+            setActiveTab('friends'); 
+            setSelectedFriend(null); 
+            setPaywallFeature(null);
+          }
+        }} style={{ position: 'relative' }}>
           <Users size={24} />
           {totalPending > 0 && <span style={{ position: 'absolute', top: '5px', right: '50%', transform: 'translateX(15px)', backgroundColor: 'var(--danger)', color: 'white', borderRadius: '50%', width: '18px', height: '18px', fontSize: '0.7rem', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' }}>{totalPending}</span>}
           <span>Comunidad</span>
         </button>
-        <button className={`nav-item ${activeTab === 'albums' ? 'active' : ''}`} onClick={() => setActiveTab('albums')}>
+        <button className={`nav-item ${activeTab === 'albums' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('albums'); setPaywallFeature(null); }}>
           <Library size={24} />
           <span>Álbumes</span>
         </button>
-        <button className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+        <button className={`nav-item ${activeTab === 'profile' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('profile'); setPaywallFeature(null); }}>
           <User size={24} />
           <span>Perfil</span>
         </button>
