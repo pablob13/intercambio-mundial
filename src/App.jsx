@@ -1217,7 +1217,7 @@ function MainApp({ session, onLogout }) {
                   style={{ marginTop: '10px', fontSize: '0.8rem', padding: '5px 10px', backgroundColor: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                   onClick={() => {
                     // TODO: Pablo, pega tu enlace del Customer Portal de Stripe aquí adentro de las comillas
-                    const stripePortalLink = ""; 
+                    const stripePortalLink = "https://billing.stripe.com/p/login/3cIfZgaEq4hr31v9QHabK00"; 
                     if (stripePortalLink) {
                       window.open(stripePortalLink, '_blank');
                     } else {
