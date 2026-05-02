@@ -613,6 +613,7 @@ function MainApp({ session, onLogout }) {
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState('');
   const [selectedAchievement, setSelectedAchievement] = useState(null);
+  const [selectedMissingTeam, setSelectedMissingTeam] = useState(null);
 
   useEffect(() => {
     if (Object.keys(expandedTeams).length === 0) {
@@ -1145,8 +1146,9 @@ function MainApp({ session, onLogout }) {
       const totalInTeam = teamStamps.length;
       const ownedInTeam = teamStamps.filter(s => s.count > 0).length;
       const duplicatesInTeam = teamStamps.reduce((acc, s) => acc + (s.count > 1 ? s.count - 1 : 0), 0);
+      const faltantesInTeam = totalInTeam - ownedInTeam;
       const progressPercent = totalInTeam > 0 ? Math.round((ownedInTeam / totalInTeam) * 100) : 0;
-      return { ...t, totalInTeam, ownedInTeam, duplicatesInTeam, progressPercent };
+      return { ...t, totalInTeam, ownedInTeam, duplicatesInTeam, faltantesInTeam, progressPercent };
     });
 
     const topCompleted = [...teamStats].sort((a, b) => b.progressPercent - a.progressPercent || b.ownedInTeam - a.ownedInTeam);
@@ -1312,7 +1314,9 @@ function MainApp({ session, onLogout }) {
               <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>📉 Más Faltantes</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {topMissing.slice(0, 5).map((t, idx) => (
-                  <div key={t.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
+                  <div key={t.code} 
+                    onClick={() => setSelectedMissingTeam(t)}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '1.2rem' }}>{t.flag}</span>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: idx === 0 ? 'bold' : 'normal' }}>{t.name}</span>
@@ -2736,6 +2740,46 @@ function MainApp({ session, onLogout }) {
             </div>
             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setSelectedAchievement(null)}>
               Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedMissingTeam && (
+        <div className="scanner-modal" onClick={() => setSelectedMissingTeam(null)}>
+          <div className="scanner-content fade-in" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '2rem' }}>{selectedMissingTeam.flag}</span>
+                {selectedMissingTeam.name}
+              </h2>
+              <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setSelectedMissingTeam(null)} />
+            </div>
+            
+            <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)', marginBottom: '20px', textAlign: 'center' }}>
+              <span style={{ color: '#f59e0b', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                Faltan {selectedMissingTeam.faltantesInTeam} estampas
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', gap: '10px', maxHeight: '40vh', overflowY: 'auto', paddingRight: '5px' }}>
+              {stamps.filter(s => s.teamCode === selectedMissingTeam.code && s.count === 0).map(s => (
+                <div key={s.id} style={{ 
+                  backgroundColor: 'var(--panel-bg)', 
+                  border: '1px dashed var(--border)', 
+                  borderRadius: '8px', 
+                  padding: '10px 5px', 
+                  textAlign: 'center',
+                  color: 'var(--text-muted)'
+                }}>
+                  <div style={{ fontSize: '0.75rem', marginBottom: '4px' }}>{s.teamCode}</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{s.number}</div>
+                </div>
+              ))}
+            </div>
+            
+            <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '20px' }} onClick={() => setSelectedMissingTeam(null)}>
+              Cerrar
             </button>
           </div>
         </div>
