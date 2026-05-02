@@ -1349,6 +1349,7 @@ function MainApp({ session, onLogout }) {
       </div>
     </div>
   );
+  };
 
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) return;
