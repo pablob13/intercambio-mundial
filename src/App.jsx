@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -2476,7 +2476,9 @@ function MainApp({ session, onLogout }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
               <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.05)', padding: '15px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                <h3 style={{ marginBottom: '10px', fontSize: '1rem' }}>📤 Estampas que entregas (Tus repetidas)</h3>
+                <h3 style={{ marginBottom: '10px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Send size={18} color="var(--warning)" /> Estampas que entregas (Tus repetidas)
+                </h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                   {tradeGiven.map((s, idx) => (
                     <span key={idx} style={{ backgroundColor: 'var(--panel-bg)', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid var(--warning)' }}>
@@ -2513,7 +2515,9 @@ function MainApp({ session, onLogout }) {
                 )}
               </div>
               <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.05)', padding: '15px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                <h3 style={{ marginBottom: '10px', fontSize: '1rem' }}>📥 Estampas que recibes (Tus faltantes)</h3>
+                <h3 style={{ marginBottom: '10px', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Inbox size={18} color="var(--success)" /> Estampas que recibes (Tus faltantes)
+                </h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                   {tradeReceived.map((s, idx) => (
                     <span key={idx} style={{ backgroundColor: 'var(--panel-bg)', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid var(--success)' }}>
