@@ -261,6 +261,7 @@ const ProPaywall = ({ featureName, description, onUpgrade }) => (
 );
 
 const PRO_EMAILS = ['diegoortizdem@gmail.com', 'pablobesoytrigueros@gmail.com'];
+const PRO_NAMES = ['Diego Ortiz', 'Pablo Besoy'];
 
 function MainApp({ session, onLogout }) {
   const isCloud = true;
@@ -2040,6 +2041,8 @@ function MainApp({ session, onLogout }) {
           const iReceiveCount = fAlbum.filter(fs => fs.count > 1 && stamps.find(ms => ms.id === fs.id)?.count === 0).length;
           const iGiveCount = stamps.filter(ms => ms.count > 1 && fAlbum.find(fs => fs.id === ms.id)?.count === 0).length;
 
+          const isUserPro = user.is_pro || PRO_NAMES.some(name => fName.toLowerCase().includes(name.toLowerCase()));
+
           return (
             <div key={user.id} className="album-card" onClick={() => setSelectedFriend(user)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -2049,7 +2052,7 @@ function MainApp({ session, onLogout }) {
                     {unreadChats.friends[user.id] && <div style={{ position: 'absolute', top: -2, right: -2, width: '12px', height: '12px', backgroundColor: 'var(--danger)', borderRadius: '50%', border: '2px solid var(--panel-bg)' }} />}
                   </div>
                   {fName}
-                  {user.is_pro ? <Crown size={16} color="#FFD700" /> : <span style={{fontSize: '0.7rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 'normal', marginLeft: '5px', textDecoration: 'underline'}} onClick={(e) => { e.stopPropagation(); setPaywallFeature({ title: 'Mundial PRO', description: `¡Dile a ${fName} que se haga PRO para disfrutar de grupos ilimitados y funciones exclusivas!` }); }}>Invitar a PRO</span>}
+                  {isUserPro ? <Crown size={16} color="#FFD700" /> : <span style={{fontSize: '0.7rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 'normal', marginLeft: '5px', textDecoration: 'underline'}} onClick={(e) => { e.stopPropagation(); setPaywallFeature({ title: 'Mundial PRO', description: `¡Dile a ${fName} que se haga PRO para disfrutar de grupos ilimitados y funciones exclusivas!` }); }}>Invitar a PRO</span>}
                 </h3>
               </div>
               <div style={{ display: 'flex', gap: '15px', fontSize: '0.85rem' }}>
