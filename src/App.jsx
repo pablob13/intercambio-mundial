@@ -610,6 +610,7 @@ function MainApp({ session, onLogout }) {
 
   // New Album Modal State
   const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState('');
 
   useEffect(() => {
@@ -617,6 +618,24 @@ function MainApp({ session, onLogout }) {
       setExpandedTeams({ FWC: true, MEX: true, ARG: true });
     }
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const addFriendId = params.get('addFriend');
+    if (addFriendId && isCloud && session && session.user.id !== addFriendId) {
+      supabase.from('friend_requests').insert([{ sender_id: session.user.id, receiver_id: addFriendId, status: 'pending' }]).then(({ error }) => {
+        if (!error) {
+          alert("¡Solicitud de amistad enviada a través de Código QR!");
+          setActiveTab('friends');
+        } else if (error.code === '23505') {
+          // Ya existe la solicitud, no hacer nada o avisar
+          alert("Ya tienes agregado a este amigo o hay una solicitud pendiente.");
+          setActiveTab('friends');
+        }
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    }
+  }, [isCloud, session]);
 
   if (isLoadingStamps || !albumsState) {
     return (
@@ -1918,8 +1937,15 @@ function MainApp({ session, onLogout }) {
         : (
           <>
             <div className="header-card" style={{ marginBottom: '20px', padding: '20px' }}>
-              <h2>Comunidad e Intercambios</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Agrega amigos, analiza qué estampas pueden intercambiar y escríbeles para pactarlo.</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <h2 style={{ margin: '0 0 10px 0' }}>Comunidad e Intercambios</h2>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Agrega amigos, analiza qué estampas pueden intercambiar y escríbeles para pactarlo.</p>
+                </div>
+                <button className="btn btn-primary" onClick={() => setIsQRModalOpen(true)} style={{ padding: '10px', borderRadius: '12px', minWidth: '44px' }}>
+                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=https://mundialestampas.com/?addFriend=${session?.user?.id}`} style={{ width: 24, height: 24, filter: 'invert(1)' }} alt="QR" />
+                </button>
+              </div>
             </div>
 
             {!friendsData ? (
@@ -2454,6 +2480,31 @@ function MainApp({ session, onLogout }) {
             <div className="loading-spinner"></div>
             <p style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{scanProgress}%</p>
             <p style={{ color: '#94a3b8', marginTop: 10 }}>Leyendo texto con Inteligencia Artificial. Esto puede tardar unos segundos.</p>
+          </div>
+        </div>
+      )}
+
+      {isQRModalOpen && session && (
+        <div className="scanner-modal" onClick={() => setIsQRModalOpen(false)}>
+          <div className="scanner-content fade-in" onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0 }}>Mi Código QR</h2>
+              <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setIsQRModalOpen(false)} />
+            </div>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
+              Muestra este código a un amigo para que lo escanee con la cámara de su celular y te agregue al instante.
+            </p>
+            <div style={{ background: 'white', padding: '20px', borderRadius: '16px', display: 'inline-block', marginBottom: '20px' }}>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://mundialestampas.com/?addFriend=${session.user.id}`} alt="Mi QR" style={{ width: '100%', maxWidth: '250px', height: 'auto' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+              <button className="btn btn-secondary" onClick={() => {
+                navigator.clipboard.writeText(`https://mundialestampas.com/?addFriend=${session.user.id}`);
+                alert("¡Link copiado al portapapeles!");
+              }}>
+                <Library size={18} /> Copiar Link Directo
+              </button>
+            </div>
           </div>
         </div>
       )}
