@@ -89,10 +89,27 @@ function LoginScreen() {
     }
   };
 
+  const [isResetPassword, setIsResetPassword] = useState(false);
+
   const handleEmailAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
-    if (isSignUp) {
+    
+    if (isResetPassword) {
+      if (!email) {
+        alert("Por favor ingresa tu correo electrónico.");
+        setLoading(false);
+        return;
+      }
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname,
+      });
+      if (error) alert(error.message);
+      else {
+        alert("Te hemos enviado un correo con el enlace para restablecer tu contraseña.");
+        setIsResetPassword(false);
+      }
+    } else if (isSignUp) {
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -127,7 +144,7 @@ function LoginScreen() {
         </div>
 
         <form onSubmit={handleEmailAuth} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {isSignUp && (
+          {!isResetPassword && isSignUp && (
             <input 
               type="text" 
               className="login-input" 
@@ -145,21 +162,30 @@ function LoginScreen() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <input 
-            type="password" 
-            className="login-input" 
-            placeholder="Contraseña (mínimo 6 caracteres)" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          {!isResetPassword && (
+            <input 
+              type="password" 
+              className="login-input" 
+              placeholder="Contraseña (mínimo 6 caracteres)" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          )}
+          
           <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
-            {loading ? 'Cargando...' : (isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión')}
+            {loading ? 'Cargando...' : (isResetPassword ? 'Enviar enlace de recuperación' : (isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión'))}
           </button>
         </form>
 
-        <p style={{ marginTop: '15px', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--primary)', textAlign: 'center' }} onClick={() => setIsSignUp(!isSignUp)}>
-          {isSignUp ? '¿Ya tienes cuenta? Inicia sesión aquí' : '¿No tienes cuenta? Regístrate aquí'}
+        {!isResetPassword && !isSignUp && (
+          <p style={{ marginTop: '10px', fontSize: '0.8rem', cursor: 'pointer', color: 'var(--text-muted)', textAlign: 'right' }} onClick={() => setIsResetPassword(true)}>
+            ¿Olvidaste tu contraseña?
+          </p>
+        )}
+
+        <p style={{ marginTop: '15px', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--primary)', textAlign: 'center' }} onClick={() => { setIsSignUp(!isSignUp); setIsResetPassword(false); }}>
+          {isResetPassword ? 'Volver al inicio de sesión' : (isSignUp ? '¿Ya tienes cuenta? Inicia sesión aquí' : '¿No tienes cuenta? Regístrate aquí')}
         </p>
 
         <div style={{ marginTop: '20px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -2932,8 +2958,16 @@ function MainApp({ session, onLogout }) {
 export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
 
   useEffect(() => {
+    // Revisar si venimos de un enlace de recuperación
+    if (window.location.hash.includes('type=recovery')) {
+      setIsRecoveryMode(true);
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -2941,8 +2975,11 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryMode(true);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -2954,10 +2991,48 @@ export default function App() {
     }
   };
 
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setUpdatingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      alert(error.message);
+    } else {
+      alert('¡Contraseña actualizada exitosamente!');
+      setIsRecoveryMode(false);
+      window.location.hash = ''; // Limpiar el hash de la URL
+    }
+    setUpdatingPassword(false);
+  };
+
   if (loading) {
     return (
       <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
         <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
+  if (isRecoveryMode) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <h2>Restablecer Contraseña</h2>
+          <p>Ingresa tu nueva contraseña a continuación.</p>
+          <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+            <input 
+              type="password" 
+              className="login-input" 
+              placeholder="Nueva contraseña (mínimo 6 caracteres)" 
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={updatingPassword}>
+              {updatingPassword ? 'Guardando...' : 'Actualizar Contraseña'}
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
