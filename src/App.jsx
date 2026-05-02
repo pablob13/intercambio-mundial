@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 import './index.css';
 
 const TEAMS = [
-  { code: 'FWC', name: 'FIFA World Cup', count: 20, group: 'Special', flag: '🏆' },
+  { code: 'FWC', name: 'Mundial', count: 20, group: 'Special', flag: '🏆' },
   // Group A
   { code: 'MEX', name: 'Mexico', count: 20, group: 'A', flag: '🇲🇽' },
   { code: 'RSA', name: 'South Africa', count: 20, group: 'A', flag: '🇿🇦' },
@@ -66,7 +66,7 @@ const TEAMS = [
   { code: 'CRO', name: 'Croatia', count: 20, group: 'L', flag: '🇭🇷' },
   { code: 'GHA', name: 'Ghana', count: 20, group: 'L', flag: '🇬🇭' },
   { code: 'PAN', name: 'Panama', count: 20, group: 'L', flag: '🇵🇦' },
-  { code: 'CC', name: 'Coca Cola', count: 14, group: 'CocaCola', flag: '🥤' }
+  { code: 'CC', name: 'Coca', count: 14, group: 'CocaCola', flag: '🥤' }
 ];
 
 const TOTAL_STAMPS = TEAMS.reduce((acc, team) => acc + team.count, 0);
@@ -704,8 +704,8 @@ function MainApp({ session, localUser, onLogout }) {
   const groupedByGroup = GROUPS.map(g => {
     let name = `Grupo ${g}`;
     if (g === 'Special') name = 'Sección Especial';
-    if (g === 'CocaCola') name = 'Team Believers (Coca-Cola)';
-    if (g === 'History') name = 'FIFA History';
+    if (g === 'CocaCola') name = 'Team Believers (Coca)';
+    if (g === 'History') name = 'Historia';
 
     return {
       id: g,
@@ -731,7 +731,7 @@ function MainApp({ session, localUser, onLogout }) {
         }
         return {
           ...team,
-          name: (team.code === 'FWC' && g === 'History') ? 'FIFA History' : team.name,
+          name: (team.code === 'FWC' && g === 'History') ? 'Historia' : team.name,
           stamps: teamStamps
         };
       }).filter(team => team.stamps.length > 0)
@@ -931,7 +931,7 @@ function MainApp({ session, localUser, onLogout }) {
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>Incluir Coca-Cola 🥤</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>Incluir Coca 🥤</span>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '5px', marginBottom: 0 }}>
                 Muestra las 14 estampas de CC.
               </p>
