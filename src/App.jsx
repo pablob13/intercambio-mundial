@@ -71,8 +71,12 @@ const TEAMS = [
 
 const TOTAL_STAMPS = TEAMS.reduce((acc, team) => acc + team.count, 0);
 
-function LoginScreen({ onLoginLocal }) {
-  const [username, setUsername] = useState('');
+function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -84,11 +88,22 @@ function LoginScreen({ onLoginLocal }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleEmailAuth = async (e) => {
     e.preventDefault();
-    if (username.trim()) {
-      onLoginLocal(username.trim());
+    setLoading(true);
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } }
+      });
+      if (error) alert(error.message);
+      else alert("¡Registro exitoso! Ya puedes iniciar sesión con tu cuenta.");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) alert("Credenciales incorrectas o cuenta no existe.");
     }
+    setLoading(false);
   };
 
   return (
@@ -100,12 +115,51 @@ function LoginScreen({ onLoginLocal }) {
         <button 
           className="btn btn-secondary google-btn" 
           onClick={handleGoogleLogin}
+          style={{ marginBottom: '20px' }}
         >
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google logo" style={{ width: '20px', height: '20px', marginRight: '10px' }} />
           Continuar con Google
         </button>
 
+        <div className="divider">
+          <span>o usa tu correo electrónico</span>
+        </div>
 
+        <form onSubmit={handleEmailAuth} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {isSignUp && (
+            <input 
+              type="text" 
+              className="login-input" 
+              placeholder="Tu nombre completo" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required={isSignUp}
+            />
+          )}
+          <input 
+            type="email" 
+            className="login-input" 
+            placeholder="Correo electrónico" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input 
+            type="password" 
+            className="login-input" 
+            placeholder="Contraseña (mínimo 6 caracteres)" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={loading}>
+            {loading ? 'Cargando...' : (isSignUp ? 'Crear Cuenta' : 'Iniciar Sesión')}
+          </button>
+        </form>
+
+        <p style={{ marginTop: '15px', fontSize: '0.85rem', cursor: 'pointer', color: 'var(--primary)', textAlign: 'center' }} onClick={() => setIsSignUp(!isSignUp)}>
+          {isSignUp ? '¿Ya tienes cuenta? Inicia sesión aquí' : '¿No tienes cuenta? Regístrate aquí'}
+        </p>
 
         <div style={{ marginTop: '20px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           Al continuar, aceptas nuestros <a href="/terminos.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>Términos y Condiciones</a> y nuestro <a href="/privacidad.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>Aviso de Privacidad</a>.
@@ -172,10 +226,10 @@ const AdBanner = ({ isPro, format = 'horizontal' }) => {
   );
 };
 
-function MainApp({ session, localUser, onLogout }) {
-  const isCloud = !!session;
-  const userName = session?.user?.user_metadata?.full_name || session?.user?.email || localUser;
-  const storageKey = `paniniStamps2026_v4_${localUser}`;
+function MainApp({ session, onLogout }) {
+  const isCloud = true;
+  const userName = session?.user?.user_metadata?.full_name || session?.user?.email;
+  const storageKey = `paniniStamps2026_v4_${session?.user?.id}`;
 
   const [albumsState, setAlbumsState] = useState(null);
   const [isLoadingStamps, setIsLoadingStamps] = useState(true);
@@ -2000,7 +2054,6 @@ function MainApp({ session, localUser, onLogout }) {
 
 export default function App() {
   const [session, setSession] = useState(null);
-  const [localUser, setLocalUser] = useState(() => localStorage.getItem('currentUser') || '');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -2018,17 +2071,10 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLoginLocal = (username) => {
-    setLocalUser(username);
-    localStorage.setItem('currentUser', username);
-  };
-
   const handleLogout = async () => {
     if (session) {
       await supabase.auth.signOut();
     }
-    setLocalUser('');
-    localStorage.removeItem('currentUser');
   };
 
   if (loading) {
@@ -2039,10 +2085,10 @@ export default function App() {
     );
   }
 
-  if (!session && !localUser) {
-    return <LoginScreen onLoginLocal={handleLoginLocal} />;
+  if (!session) {
+    return <LoginScreen />;
   }
 
-  return <MainApp session={session} localUser={localUser} onLogout={handleLogout} />;
+  return <MainApp session={session} onLogout={handleLogout} />;
 }
 
