@@ -1228,47 +1228,20 @@ function MainApp({ session, onLogout }) {
           <h4 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>Logros Desbloqueados</h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
             {achievements.map(a => (
-              <div key={a.id} style={{ 
+              <div key={a.id} 
+                onClick={() => alert(`${a.icon} ${a.title}\n\n${a.desc}\n\nEstado: ${a.condition ? '✅ ¡Desbloqueado!' : '🔒 Aún bloqueado'}`)}
+                style={{ 
                 backgroundColor: a.condition ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)', 
                 border: `1px solid ${a.condition ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, 
                 borderRadius: '12px', padding: '10px', textAlign: 'center',
                 opacity: a.condition ? 1 : 0.4,
-                filter: a.condition ? 'none' : 'grayscale(100%)'
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: '5px' }}>{a.icon}</div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? 'var(--text-main)' : 'var(--text-muted)' }}>{a.title}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><Star size={20} color="#3b82f6" /> Mi Progreso y Gastos</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{progressPercent}%</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Álbum Completado</div>
-            </div>
-            <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{packsOpened}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sobres Abiertos</div>
-            </div>
-            <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>${estimatedCost}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Gasto Estimado</div>
-            </div>
-          </div>
-          
-          <h4 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>Logros Desbloqueados</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
-            {achievements.map(a => (
-              <div key={a.id} style={{ 
-                backgroundColor: a.condition ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)', 
-                border: `1px solid ${a.condition ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, 
-                borderRadius: '12px', padding: '10px', textAlign: 'center',
-                opacity: a.condition ? 1 : 0.4,
-                filter: a.condition ? 'none' : 'grayscale(100%)'
-              }}>
+                filter: a.condition ? 'none' : 'grayscale(100%)',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              >
                 <div style={{ fontSize: '2rem', marginBottom: '5px' }}>{a.icon}</div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? 'var(--text-main)' : 'var(--text-muted)' }}>{a.title}</div>
               </div>
