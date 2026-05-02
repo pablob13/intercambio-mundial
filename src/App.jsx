@@ -1514,8 +1514,8 @@ function MainApp({ session, onLogout }) {
     allMembers.forEach(a => {
       allMembers.forEach(b => {
         if (a.id === b.id) return;
-        const aAlbum = a.stamps_data.albums?.find(al => al.id === a.stamps_data.activeAlbumId)?.stamps || [];
-        const bAlbum = b.stamps_data.albums?.find(al => al.id === b.stamps_data.activeAlbumId)?.stamps || [];
+        const aAlbum = a.stamps_data?.albums?.find(al => al.id === a.stamps_data?.activeAlbumId)?.stamps || [];
+        const bAlbum = b.stamps_data?.albums?.find(al => al.id === b.stamps_data?.activeAlbumId)?.stamps || [];
         const aDupes = aAlbum.filter(s => s.count > 1).map(s => s.id);
         const bNeeds = bAlbum.filter(s => s.count === 0 && activeTeams.some(t => t.code === s.teamCode)).map(s => s.id);
         const trades = aDupes.filter(sId => bNeeds.includes(sId));
@@ -1534,8 +1534,8 @@ function MainApp({ session, onLogout }) {
           if (!processedDirectPairs.has(pairKey)) {
             processedDirectPairs.add(pairKey);
             directTrades.push({
-              p1: e1.from.stamps_data.ownerName || 'Usuario',
-              p2: e2.from.stamps_data.ownerName || 'Usuario',
+              p1: e1.from.stamps_data?.ownerName || 'Usuario',
+              p2: e2.from.stamps_data?.ownerName || 'Usuario',
               p1Gives: e1.stamps,
               p2Gives: e2.stamps
             });
@@ -1555,9 +1555,9 @@ function MainApp({ session, onLogout }) {
               if (!processedTriangleKeys.has(triKey)) {
                 processedTriangleKeys.add(triKey);
                 triangles.push([
-                  { from: e1.from.stamps_data.ownerName || 'Usuario', to: e1.to.stamps_data.ownerName || 'Usuario', stamp: e1.stamps[0] },
-                  { from: e2.from.stamps_data.ownerName || 'Usuario', to: e2.to.stamps_data.ownerName || 'Usuario', stamp: e2.stamps[0] },
-                  { from: e3.from.stamps_data.ownerName || 'Usuario', to: e3.to.stamps_data.ownerName || 'Usuario', stamp: e3.stamps[0] }
+                  { from: e1.from.stamps_data?.ownerName || 'Usuario', to: e1.to.stamps_data?.ownerName || 'Usuario', stamp: e1.stamps[0] },
+                  { from: e2.from.stamps_data?.ownerName || 'Usuario', to: e2.to.stamps_data?.ownerName || 'Usuario', stamp: e2.stamps[0] },
+                  { from: e3.from.stamps_data?.ownerName || 'Usuario', to: e3.to.stamps_data?.ownerName || 'Usuario', stamp: e3.stamps[0] }
                 ]);
               }
             }
@@ -1623,7 +1623,7 @@ function MainApp({ session, onLogout }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                 {allMembers.map(m => (
                   <span key={m.id} style={{ backgroundColor: 'var(--panel-bg)', padding: '5px 12px', borderRadius: '15px', border: '1px solid var(--border)', fontSize: '0.9rem' }}>
-                    {m.stamps_data.ownerName || 'Usuario'} {m.id === session.user.id && '(Tú)'}
+                    {m.stamps_data?.ownerName || 'Usuario'} {m.id === session.user.id && '(Tú)'}
                   </span>
                 ))}
               </div>
@@ -1640,7 +1640,7 @@ function MainApp({ session, onLogout }) {
                           setSelectedGroup(prev => ({ ...prev, group_members: [...prev.group_members, { user_id: f.id, status: 'pending' }] }));
                         }
                       }}>
-                        <UserPlus size={16} /> Invitar a {f.stamps_data.ownerName?.split(' ')[0] || 'Amigo'}
+                        <UserPlus size={16} /> Invitar a {f.stamps_data?.ownerName?.split(' ')[0] || 'Amigo'}
                       </button>
                     ))}
                   </div>
@@ -1725,7 +1725,7 @@ function MainApp({ session, onLogout }) {
                 groupMessages.map(msg => {
                   const isMe = msg.sender_id === session.user.id;
                   const senderUser = allMembers.find(u => u.id === msg.sender_id);
-                  const senderName = senderUser ? senderUser.stamps_data.ownerName : 'Usuario';
+                  const senderName = senderUser ? senderUser.stamps_data?.ownerName : 'Usuario';
                   
                   return (
                     <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '85%' }}>
@@ -1768,8 +1768,8 @@ function MainApp({ session, onLogout }) {
     }
 
     if (selectedFriend) {
-      const friendAlbum = selectedFriend.stamps_data.albums?.find(a => a.id === selectedFriend.stamps_data.activeAlbumId)?.stamps || [];
-      const friendName = selectedFriend.stamps_data.ownerName || 'Usuario Anónimo';
+      const friendAlbum = selectedFriend.stamps_data?.albums?.find(a => a.id === selectedFriend.stamps_data?.activeAlbumId)?.stamps || [];
+      const friendName = selectedFriend.stamps_data?.ownerName || 'Usuario Anónimo';
       const friendOwned = friendAlbum.filter(s => s.count > 0 && activeTeams.some(t => t.code === s.teamCode)).length;
       const friendPercent = Math.round((friendOwned / activeTotalStamps) * 100);
       
@@ -2035,8 +2035,8 @@ function MainApp({ session, onLogout }) {
     const renderUserList = (list) => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {list.map(user => {
-          const fName = user.stamps_data.ownerName || 'Usuario Anónimo';
-          const fAlbum = user.stamps_data.albums?.find(a => a.id === user.stamps_data.activeAlbumId)?.stamps || [];
+          const fName = user.stamps_data?.ownerName || 'Usuario Anónimo';
+          const fAlbum = user.stamps_data?.albums?.find(a => a.id === user.stamps_data?.activeAlbumId)?.stamps || [];
           const fDuplicates = fAlbum.filter(s => s.count > 1).length;
           const iReceiveCount = fAlbum.filter(fs => fs.count > 1 && stamps.find(ms => ms.id === fs.id)?.count === 0).length;
           const iGiveCount = stamps.filter(ms => ms.count > 1 && fAlbum.find(fs => fs.id === ms.id)?.count === 0).length;
