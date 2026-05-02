@@ -1032,7 +1032,7 @@ function MainApp({ session, onLogout }) {
               {/* Mensual Card */}
               <div style={{ backgroundColor: 'var(--panel-bg)', border: '1px solid #FFD700', borderRadius: '12px', padding: '15px', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
                 <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-muted)' }}>Suscripción</h4>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFD700', marginBottom: '5px' }}>$25<span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/mes</span></div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFD700', marginBottom: '5px' }}>$27<span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/mes</span></div>
                 <button 
                   className="btn btn-primary" 
                   style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid #FFD700', color: '#FFD700', marginTop: 'auto', padding: '10px 5px', fontSize: '0.9rem' }} 
