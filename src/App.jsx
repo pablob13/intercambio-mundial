@@ -214,6 +214,7 @@ function MainApp({ session, localUser, onLogout }) {
   const [newGroupName, setNewGroupName] = useState('');
   const [lastReadChats, setLastReadChats] = useState(() => JSON.parse(localStorage.getItem('lastReadChats') || '{}'));
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [unreadChats, setUnreadChats] = useState({ friends: {}, groups: {} });
   const groupChatScrollRef = useRef(null);
   const chatScrollRef = useRef(null);
 
@@ -432,7 +433,8 @@ function MainApp({ session, localUser, onLogout }) {
   useEffect(() => {
     if (!isCloud || !session) return;
     const checkUnread = async () => {
-      let unread = 0;
+      let unreadCount = 0;
+      const newUnread = { friends: {}, groups: {} };
       
       const { data: msgs } = await supabase.from('messages').select('sender_id, created_at').eq('receiver_id', session.user.id);
       if (msgs) {
@@ -446,7 +448,10 @@ function MainApp({ session, localUser, onLogout }) {
         
         Object.entries(latestBySender).forEach(([senderId, time]) => {
           const lastRead = lastReadChats[senderId] || 0;
-          if (time > lastRead) unread++;
+          if (time > lastRead) {
+            unreadCount++;
+            newUnread.friends[senderId] = true;
+          }
         });
       }
 
@@ -463,12 +468,16 @@ function MainApp({ session, localUser, onLogout }) {
           });
           Object.entries(latestByGroup).forEach(([groupId, time]) => {
             const lastRead = lastReadChats[groupId] || 0;
-            if (time > lastRead) unread++;
+            if (time > lastRead) {
+              unreadCount++;
+              newUnread.groups[groupId] = true;
+            }
           });
         }
       }
       
-      setUnreadChatCount(unread);
+      setUnreadChatCount(unreadCount);
+      setUnreadChats(newUnread);
     };
     
     checkUnread();
@@ -1175,8 +1184,9 @@ function MainApp({ session, localUser, onLogout }) {
           <button className={`filter-btn ${groupSubTab === 'match' ? 'active' : ''}`} onClick={() => setGroupSubTab('match')} style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '5px' }}>
             <ArrowRightLeft size={16} /> Intercambios
           </button>
-          <button className={`filter-btn ${groupSubTab === 'chat' ? 'active' : ''}`} onClick={() => setGroupSubTab('chat')} style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '5px' }}>
+          <button className={`filter-btn ${groupSubTab === 'chat' ? 'active' : ''}`} onClick={() => setGroupSubTab('chat')} style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '5px', position: 'relative' }}>
             <MessageCircle size={16} /> Chat del Grupo
+            {unreadChats.groups[selectedGroup.id] && <div style={{ position: 'absolute', top: '5px', right: '15%', width: '8px', height: '8px', backgroundColor: 'var(--danger)', borderRadius: '50%' }} />}
           </button>
         </div>
 
@@ -1405,7 +1415,10 @@ function MainApp({ session, localUser, onLogout }) {
 
           <div className="filters" style={{ marginBottom: '20px' }}>
             <button className={`filter-btn ${friendSubTab === 'match' ? 'active' : ''}`} onClick={() => setFriendSubTab('match')} style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '5px' }}><ArrowRightLeft size={16} /> Intercambios</button>
-            <button className={`filter-btn ${friendSubTab === 'chat' ? 'active' : ''}`} onClick={() => setFriendSubTab('chat')} style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '5px' }}><MessageCircle size={16} /> Chat</button>
+            <button className={`filter-btn ${friendSubTab === 'chat' ? 'active' : ''}`} onClick={() => setFriendSubTab('chat')} style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '5px', position: 'relative' }}>
+              <MessageCircle size={16} /> Chat
+              {unreadChats.friends[selectedFriend.id] && <div style={{ position: 'absolute', top: '5px', right: '15%', width: '8px', height: '8px', backgroundColor: 'var(--danger)', borderRadius: '50%' }} />}
+            </button>
           </div>
 
           {friendSubTab === 'match' ? (
@@ -1465,8 +1478,9 @@ function MainApp({ session, localUser, onLogout }) {
             <div key={user.id} className="album-card" onClick={() => setSelectedFriend(user)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>
+                  <div style={{ position: 'relative', width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>
                     {fName.charAt(0).toUpperCase()}
+                    {unreadChats.friends[user.id] && <div style={{ position: 'absolute', top: -2, right: -2, width: '12px', height: '12px', backgroundColor: 'var(--danger)', borderRadius: '50%', border: '2px solid var(--panel-bg)' }} />}
                   </div>
                   {fName}
                 </h3>
@@ -1568,7 +1582,10 @@ function MainApp({ session, localUser, onLogout }) {
                     <div key={g.id} className="album-card" onClick={() => setSelectedGroup(g)}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>{g.name.charAt(0).toUpperCase()}</div>
+                          <div style={{ position: 'relative', width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>
+                            {g.name.charAt(0).toUpperCase()}
+                            {unreadChats.groups[g.id] && <div style={{ position: 'absolute', top: -2, right: -2, width: '12px', height: '12px', backgroundColor: 'var(--danger)', borderRadius: '50%', border: '2px solid var(--panel-bg)' }} />}
+                          </div>
                           {g.name}
                         </h3>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{g.group_members?.filter(m => m.status !== 'pending').length || 1} miembros</span>
