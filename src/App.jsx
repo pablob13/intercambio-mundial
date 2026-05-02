@@ -2064,7 +2064,7 @@ function MainApp({ session, onLogout }) {
         </div>
       )}
 
-      {filter === 'missing' && (stamps.length - ownedCount) > 0 && (
+      {filter === 'missing' && stamps.filter(s => s.count === 0).length > 0 && (
         <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)', borderRadius: '12px' }}>
           <h3 style={{ color: 'var(--danger)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             Compartir Faltantes {!isPro && <Crown size={16} color="#FFD700" />}
