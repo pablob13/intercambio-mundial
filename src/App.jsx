@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -262,8 +262,11 @@ const ProPaywall = ({ featureName, description, onUpgrade }) => (
 
 function MainApp({ session, onLogout }) {
   const isCloud = true;
-  const userName = session?.user?.user_metadata?.full_name || session?.user?.email;
   const storageKey = `paniniStamps2026_v4_${session?.user?.id}`;
+
+  const [userName, setUserName] = useState(session?.user?.user_metadata?.full_name || session?.user?.email || 'Usuario');
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState(userName);
 
   const [albumsState, setAlbumsState] = useState(null);
 
@@ -1161,15 +1164,45 @@ function MainApp({ session, onLogout }) {
       <div className="profile-card">
         <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px', fontWeight: 'bold' }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px', fontWeight: 'bold', flexShrink: 0 }}>
               {userName.charAt(0).toUpperCase()}
             </div>
-            <div>
-              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-                {userName}
-                {isPro && <Crown size={20} color="#FFD700" />}
-              </h2>
-              <p style={{ margin: '5px 0 0', color: 'var(--text-muted)' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {isEditingName ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input 
+                    type="text" 
+                    value={editNameValue} 
+                    onChange={e => setEditNameValue(e.target.value)} 
+                    className="search-input" 
+                    style={{ flex: 1, margin: 0, padding: '8px', minWidth: '100px' }}
+                    autoFocus 
+                  />
+                  <button className="btn btn-success" style={{ padding: '8px 12px', flexShrink: 0 }} onClick={async () => {
+                    const trimmed = editNameValue.trim();
+                    if (trimmed) {
+                      setUserName(trimmed);
+                      setIsEditingName(false);
+                      if (isCloud) {
+                        await supabase.auth.updateUser({ data: { full_name: trimmed } });
+                      }
+                      if (albumsState) {
+                        setAlbumsState({ ...albumsState, ownerName: trimmed });
+                      }
+                    } else {
+                      setIsEditingName(false);
+                    }
+                  }}><Check size={16} /></button>
+                  <button className="btn btn-secondary" style={{ padding: '8px 12px', flexShrink: 0 }} onClick={() => setIsEditingName(false)}><X size={16} /></button>
+                </div>
+              ) : (
+                <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{userName}</span>
+                  <Pen size={16} color="var(--text-muted)" style={{ cursor: 'pointer', flexShrink: 0 }} onClick={() => { setEditNameValue(userName); setIsEditingName(true); }} />
+                  {isPro && <Crown size={20} color="#FFD700" style={{ flexShrink: 0 }} />}
+                </h2>
+              )}
+              <p style={{ margin: '5px 0 0', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {isCloud ? session?.user?.email : 'Modo Local (Sin Nube)'}
               </p>
             </div>
