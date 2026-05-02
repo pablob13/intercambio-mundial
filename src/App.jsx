@@ -2096,9 +2096,29 @@ function MainApp({ session, onLogout }) {
                       {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </div>
                     {isExpanded && (
-                      <div className="stamps-grid team-grid">
+                      <div className="stamps-grid team-grid" style={{ position: 'relative', overflow: 'hidden' }}>
+                        {teamPercent === 100 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            fontSize: '15rem',
+                            pointerEvents: 'none',
+                            zIndex: 0,
+                            userSelect: 'none',
+                            animation: 'flag-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '100%',
+                            height: '100%',
+                            filter: 'grayscale(0%)'
+                          }}>
+                            {team.flag}
+                          </div>
+                        )}
                         {team.stamps.map(stamp => (
-                          <button key={stamp.id} className={`stamp-btn ${stamp.count > 0 ? 'owned' : ''} ${stamp.scanned ? 'scanned' : ''}`} onClick={() => handleStampClick(stamp)}>
+                          <button key={stamp.id} className={`stamp-btn ${stamp.count > 0 ? 'owned' : ''} ${stamp.scanned ? 'scanned' : ''}`} style={{ zIndex: 1 }} onClick={() => handleStampClick(stamp)}>
                             <span className="stamp-id">{stamp.teamCode}<br/>{stamp.number}</span>
                             {stamp.count > 1 && <div className="badge duplicate">+{stamp.count - 1}</div>}
                             {stamp.count === 1 && <div className="badge"><Check size={12} /></div>}
