@@ -598,6 +598,8 @@ function MainApp({ session, onLogout }) {
   const [scannedNumbers, setScannedNumbers] = useState([]);
   const [selectedStampId, setSelectedStampId] = useState(null);
   const [expandedTeams, setExpandedTeams] = useState({});
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedStamps, setSelectedStamps] = useState([]);
   
   // Trade Modal State
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
@@ -626,6 +628,15 @@ function MainApp({ session, onLogout }) {
   }
 
   const handleStampClick = (stamp) => {
+    if (selectionMode) {
+      if (selectedStamps.includes(stamp.id)) {
+        setSelectedStamps(prev => prev.filter(id => id !== stamp.id));
+      } else {
+        setSelectedStamps(prev => [...prev, stamp.id]);
+      }
+      return;
+    }
+
     if (stamp.count === 0) {
       updateStampCount(stamp.id, 1);
     } else {
@@ -2026,7 +2037,7 @@ function MainApp({ session, onLogout }) {
         )}
       </div>
 
-      <div className="controls">
+      <div className="controls" style={{ display: 'flex', gap: '10px' }}>
         <div style={{ position: 'relative', flex: 1 }}>
           <Search size={18} style={{ position: 'absolute', left: 10, top: 12, color: '#94a3b8' }} />
           <input 
@@ -2038,6 +2049,13 @@ function MainApp({ session, onLogout }) {
             style={{ paddingLeft: 35, width: '100%', boxSizing: 'border-box' }}
           />
         </div>
+        <button 
+          className={`btn ${selectionMode ? 'btn-primary' : 'btn-secondary'}`} 
+          style={{ padding: '0 15px', borderRadius: '12px' }}
+          onClick={() => { setSelectionMode(!selectionMode); setSelectedStamps([]); }}
+        >
+          <CheckSquare size={20} />
+        </button>
       </div>
 
       <div className="filters">
@@ -2093,7 +2111,22 @@ function MainApp({ session, onLogout }) {
                         <h2 style={{ fontSize: '1.2rem', margin: 0 }}>{team.flag} {team.name} ({team.code})</h2>
                         <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>{teamOwned}/{team.stamps.length} ({teamPercent}%)</span>
                       </div>
-                      {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button 
+                          className="btn" 
+                          style={{ padding: '5px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectionMode(true);
+                            const ids = team.stamps.map(s => s.id);
+                            setSelectedStamps(prev => Array.from(new Set([...prev, ...ids])));
+                            if (!expandedTeams[team.code]) toggleTeam(team.code);
+                          }}
+                        >
+                          <CheckSquare size={16} />
+                        </button>
+                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </div>
                     </div>
                     {isExpanded && (
                       <div className="stamps-grid team-grid" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -2117,13 +2150,21 @@ function MainApp({ session, onLogout }) {
                             {team.flag}
                           </div>
                         )}
-                        {team.stamps.map(stamp => (
-                          <button key={stamp.id} className={`stamp-btn ${stamp.count > 0 ? 'owned' : ''} ${stamp.scanned ? 'scanned' : ''}`} style={{ zIndex: 1 }} onClick={() => handleStampClick(stamp)}>
-                            <span className="stamp-id">{stamp.teamCode}<br/>{stamp.number}</span>
-                            {stamp.count > 1 && <div className="badge duplicate">+{stamp.count - 1}</div>}
-                            {stamp.count === 1 && <div className="badge"><Check size={12} /></div>}
-                          </button>
-                        ))}
+                        {team.stamps.map(stamp => {
+                          const isSelected = selectedStamps.includes(stamp.id);
+                          return (
+                            <button 
+                              key={stamp.id} 
+                              className={`stamp-btn ${stamp.count > 0 ? 'owned' : ''} ${stamp.scanned ? 'scanned' : ''} ${isSelected ? 'selected' : ''}`} 
+                              style={{ zIndex: 1, ...(isSelected ? { borderColor: 'white', transform: 'scale(1.1)', boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}) }} 
+                              onClick={() => handleStampClick(stamp)}
+                            >
+                              <span className="stamp-id">{stamp.teamCode}<br/>{stamp.number}</span>
+                              {stamp.count > 1 && <div className="badge duplicate">+{stamp.count - 1}</div>}
+                              {stamp.count === 1 && <div className="badge"><Check size={12} /></div>}
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -2136,6 +2177,42 @@ function MainApp({ session, onLogout }) {
           <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>No se encontraron estampas con esos filtros.</div>
         )}
       </div>
+
+      {selectionMode && (
+        <div style={{
+          position: 'fixed',
+          bottom: '80px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'var(--panel-bg)',
+          border: '1px solid var(--primary)',
+          borderRadius: '24px',
+          padding: '10px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.8)',
+          zIndex: 1000,
+          whiteSpace: 'nowrap'
+        }} className="fade-in">
+          <span style={{ fontWeight: 'bold', color: 'white' }}>{selectedStamps.length} selecc.</span>
+          <button className="btn btn-secondary" style={{ padding: '8px 12px', fontSize: '0.8rem', color: '#f87171', borderColor: '#f87171' }} onClick={() => {
+            const newStamps = stamps.map(s => selectedStamps.includes(s.id) ? { ...s, count: 0, scanned: false } : s);
+            setStamps(newStamps);
+            setSelectionMode(false);
+            setSelectedStamps([]);
+          }}>Quitar</button>
+          <button className="btn btn-primary" style={{ padding: '8px 12px', fontSize: '0.8rem' }} onClick={() => {
+            const newStamps = stamps.map(s => selectedStamps.includes(s.id) ? { ...s, count: s.count === 0 ? 1 : s.count, scanned: false } : s);
+            setStamps(newStamps);
+            setSelectionMode(false);
+            setSelectedStamps([]);
+          }}>Obtener</button>
+          <button className="btn" style={{ padding: '8px', background: 'transparent', color: 'var(--text-muted)' }} onClick={() => { setSelectionMode(false); setSelectedStamps([]); }}>
+            <X size={18} />
+          </button>
+        </div>
+      )}
 
       {selectedStampId && (() => {
         const selectedStamp = stamps.find(s => s.id === selectedStampId);
