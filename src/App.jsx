@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -1127,6 +1127,9 @@ function MainApp({ session, onLogout }) {
     const progressPercent = Math.round((ownedStampsCount / stamps.length) * 100) || 0;
     const packsOpened = Math.ceil(totalStampsCount / 5);
     const estimatedCost = packsOpened * 25; // 25 MXN por sobre
+    const faltantesTotales = stamps.length - ownedStampsCount;
+    const repetidasTotales = stamps.reduce((acc, s) => acc + (s.count > 1 ? s.count - 1 : 0), 0);
+    const amigosAgregados = friendsData?.length || 0;
 
     const achievements = [
       { id: 'first_blood', title: 'Primera Estampa', icon: Target, color: '#3b82f6', condition: ownedStampsCount > 0, desc: 'Pegaste tu primera estampa.', progressText: `${Math.round((Math.min(ownedStampsCount, 1) / 1) * 100)}%` },
@@ -1210,12 +1213,23 @@ function MainApp({ session, onLogout }) {
         )}
 
         <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><Star size={20} color="#3b82f6" /> Mi Progreso y Gastos</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{progressPercent}%</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Álbum Completado</div>
+          <h3 style={{ marginTop: 0, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Star size={20} color="#3b82f6" /> Mi Progreso y Gastos</h3>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
+            <div style={{ 
+              width: '140px', height: '140px', borderRadius: '50%',
+              background: `conic-gradient(var(--primary) ${progressPercent}%, rgba(255,255,255,0.05) 0)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 20px rgba(59, 130, 246, 0.2)'
+            }}>
+              <div style={{ width: '110px', height: '110px', borderRadius: '50%', backgroundColor: 'var(--panel-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{progressPercent}%</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>COMPLETADO</span>
+              </div>
             </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '20px' }}>
             <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{packsOpened}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sobres Abiertos</div>
@@ -1223,6 +1237,14 @@ function MainApp({ session, onLogout }) {
             <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>${estimatedCost}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Gasto Estimado</div>
+            </div>
+            <div style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>{repetidasTotales}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Repetidas</div>
+            </div>
+            <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{faltantesTotales}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Faltantes</div>
             </div>
           </div>
           
@@ -1244,7 +1266,12 @@ function MainApp({ session, onLogout }) {
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
               >
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-                  <a.icon size={32} color={a.condition ? a.color : '#94a3b8'} />
+                  <div style={{ position: 'relative', display: 'inline-block', width: '40px', height: '40px' }}>
+                    <Trophy size={40} color={a.condition ? '#FFD700' : '#475569'} strokeWidth={1.5} />
+                    <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <a.icon size={14} color={a.condition ? 'var(--bg-color)' : '#94a3b8'} strokeWidth={3} />
+                    </div>
+                  </div>
                 </div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? 'var(--text-main)' : 'var(--text-muted)' }}>{a.title}</div>
               </div>
@@ -2604,7 +2631,12 @@ function MainApp({ session, onLogout }) {
               <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setSelectedAchievement(null)} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', filter: selectedAchievement.condition ? 'none' : 'grayscale(100%)', opacity: selectedAchievement.condition ? 1 : 0.5 }}>
-              <selectedAchievement.icon size={64} color={selectedAchievement.color} />
+              <div style={{ position: 'relative', display: 'inline-block', width: '80px', height: '80px' }}>
+                <Trophy size={80} color={selectedAchievement.condition ? '#FFD700' : '#475569'} strokeWidth={1.5} />
+                <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <selectedAchievement.icon size={28} color={selectedAchievement.condition ? 'var(--bg-color)' : '#94a3b8'} strokeWidth={3} />
+                </div>
+              </div>
             </div>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.5rem', color: selectedAchievement.condition ? 'var(--primary)' : 'var(--text-main)' }}>
               {selectedAchievement.title}
