@@ -188,15 +188,12 @@ const generateInitialStamps = () => {
 };
 
 const AdBanner = ({ isPro, format = 'horizontal' }) => {
+  const [adImage, setAdImage] = useState('/ad1.jpg');
+
   useEffect(() => {
-    if (!isPro) {
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch (e) {
-        console.error("AdSense Error:", e);
-      }
-    }
-  }, [isPro]);
+    // Randomize between the two Trezam ads
+    setAdImage(Math.random() > 0.5 ? '/ad1.jpg' : '/ad2.jpg');
+  }, []);
 
   if (isPro) return null; // PRO users never see ads
   
@@ -209,20 +206,23 @@ const AdBanner = ({ isPro, format = 'horizontal' }) => {
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      padding: '10px 0',
+      borderRadius: '12px'
     }}>
-      <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px', color: 'var(--text-muted)' }}>Publicidad</span>
+      <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', color: 'var(--text-muted)' }}>Anuncio Patrocinado</span>
       
-      <div style={{ width: '100%', minHeight: format === 'horizontal' ? '90px' : '250px', display: 'flex', justifyContent: 'center' }}>
-        <ins className="adsbygoogle"
-             style={{ display: 'block', width: '100%' }}
-             data-ad-client="ca-pub-7619118541209092"
-             data-ad-slot="1234567890" /* Placeholder slot, AdSense will auto-fill if auto ads are enabled, or the user can specify later */
-             data-ad-format="auto"
-             data-full-width-responsive="true"></ins>
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '0 15px' }}>
+        <img 
+          src={adImage} 
+          alt="Trezam Seguros" 
+          style={{ width: '100%', maxWidth: '400px', height: 'auto', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.4)', border: '1px solid var(--border)' }} 
+        />
       </div>
       
-      <span style={{ fontSize: '0.75rem', marginTop: '10px', color: 'var(--primary)', cursor: 'pointer' }}>Remover anuncios con Mundial PRO 👑</span>
+      <span style={{ fontSize: '0.75rem', marginTop: '15px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <Crown size={14} color="#FFD700" /> Vuelve tu cuenta PRO para remover anuncios
+      </span>
     </div>
   );
 };
