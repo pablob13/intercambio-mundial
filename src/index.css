@@ -15,17 +15,6 @@
   --font-main: 'Outfit', sans-serif;
 }
 
-.theme-mexico {
-  --bg-color: #0b1713;
-  --panel-bg: #11261c;
-  --primary: #00985c;
-  --primary-hover: #007a4a;
-  --success: #10b981;
-  --warning: #ce1126;
-  --danger: #ce1126;
-  --border: #1a3b2b;
-}
-
 * {
   box-sizing: border-box;
   margin: 0;

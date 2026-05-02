@@ -3,6 +3,7 @@ import Tesseract from 'tesseract.js';
 import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
+import { TEAM_THEMES } from './themes';
 
 const TEAMS = [
   { code: 'FWC', name: 'Mundial', count: 20, group: 'Special', flag: '🏆' },
@@ -246,6 +247,22 @@ function MainApp({ session, onLogout }) {
   const storageKey = `paniniStamps2026_v4_${session?.user?.id}`;
 
   const [albumsState, setAlbumsState] = useState(null);
+
+  useEffect(() => {
+    const currentThemeCode = albumsState?.theme || 'MUNDIAL';
+    const currentTheme = TEAM_THEMES[currentThemeCode] || TEAM_THEMES['MUNDIAL'];
+    const root = document.documentElement;
+    if (currentTheme) {
+      root.style.setProperty('--bg-color', currentTheme.bg);
+      root.style.setProperty('--panel-bg', currentTheme.panel);
+      root.style.setProperty('--primary', currentTheme.primary);
+      root.style.setProperty('--primary-hover', currentTheme.hover || currentTheme.primary);
+      root.style.setProperty('--warning', currentTheme.warning);
+      root.style.setProperty('--danger', currentTheme.danger);
+      root.style.setProperty('--border', currentTheme.border);
+    }
+  }, [albumsState?.theme]);
+
   const [isLoadingStamps, setIsLoadingStamps] = useState(true);
   const [activeTab, setActiveTab] = useState('collection'); // 'collection', 'albums', 'profile', 'friends'
   const [friendsData, setFriendsData] = useState(null);
@@ -1078,20 +1095,25 @@ function MainApp({ session, onLogout }) {
 
         <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '20px' }}>
           <h3 style={{ marginTop: 0, marginBottom: '15px' }}>Preferencias</h3>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
             <div>
-              <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>Tema México 2026 🇲🇽</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>Tema Visual 🎨</span>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '5px', marginBottom: 0 }}>
-                Colores de la Selección Nacional.
+                Personaliza la app con los colores de tu selección favorita.
               </p>
             </div>
-            <button 
-              className={`btn ${albumsState.theme === 'mexico' ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => setAlbumsState(prev => ({ ...prev, theme: prev.theme === 'mexico' ? 'dark' : 'mexico' }))}
-              style={{ padding: '8px 15px' }}
+            <select 
+              value={albumsState?.theme || 'MUNDIAL'} 
+              onChange={(e) => setAlbumsState(prev => ({ ...prev, theme: e.target.value }))}
+              style={{ padding: '10px', borderRadius: '8px', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', border: '1px solid var(--border)', outline: 'none', width: '100%', fontSize: '1rem', cursor: 'pointer' }}
             >
-              {albumsState.theme === 'mexico' ? 'Activado' : 'Activar'}
-            </button>
+              <option value="MUNDIAL">🏆 Mundial (Por Defecto)</option>
+              {TEAMS.filter(t => t.code !== 'FWC' && t.code !== 'CC').sort((a,b) => a.name.localeCompare(b.name)).map(team => (
+                <option key={team.code} value={team.code}>
+                  {team.flag} {team.name}
+                </option>
+              ))}
+            </select>
           </div>
           
           <hr style={{ borderTop: '1px solid var(--border)', borderBottom: 'none', margin: '15px 0' }} />
@@ -1979,7 +2001,7 @@ function MainApp({ session, onLogout }) {
   const totalPending = pendingReceivedCount + myInvitesCount + unreadChatCount;
 
   return (
-    <div className={`app-container ${albumsState?.theme === 'mexico' ? 'theme-mexico' : ''}`}>
+    <div className="app-container">
       <div className="main-content-scroll">
         {paywallFeature ? (
           <ProPaywall 
