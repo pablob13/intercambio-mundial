@@ -1370,7 +1370,7 @@ function MainApp({ session, onLogout }) {
               onClick={() => setIsSpecialStampsModalOpen(true)}
             >
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3b82f6' }}>{escudosOwned} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>/ {totalEscudos}</span></div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Escudos Pegados <span style={{fontSize: '0.7rem', opacity: 0.8}}>(Ver Faltantes)</span></div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Escudos Pegados <span style={{fontSize: '0.7rem', opacity: 0.8}}>(Ver Todos)</span></div>
             </div>
           </div>
           
@@ -2680,16 +2680,16 @@ function MainApp({ session, onLogout }) {
         <div className="scanner-modal" onClick={() => setIsSpecialStampsModalOpen(false)}>
           <div className="scanner-content" style={{ maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>Especiales Faltantes</h2>
+              <h2 style={{ margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>Estampas Especiales</h2>
               <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setIsSpecialStampsModalOpen(false)} />
             </div>
             
             <div style={{ overflowY: 'auto', flex: 1, paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
-                <h3 style={{ marginBottom: '10px', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>🛡️ Escudos</h3>
+                <h3 style={{ marginBottom: '10px', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>🛡️ Escudos Faltantes</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {stamps.filter(s => isEscudo(s.id) && s.count === 0).map(s => (
-                    <span key={s.id} style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                    <span key={s.id} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
                       {s.id}
                     </span>
                   ))}
@@ -2700,15 +2700,43 @@ function MainApp({ session, onLogout }) {
               </div>
               
               <div>
-                <h3 style={{ marginBottom: '10px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>📸 Fotos de Equipo</h3>
+                <h3 style={{ marginBottom: '10px', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>🛡️ Escudos Pegados</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {stamps.filter(s => isEscudo(s.id) && s.count > 0).map(s => (
+                    <span key={s.id} style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                      {s.id} {s.count > 1 ? `(+${s.count - 1})` : ''}
+                    </span>
+                  ))}
+                  {stamps.filter(s => isEscudo(s.id) && s.count > 0).length === 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Aún no tienes ningún escudo.</span>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h3 style={{ marginBottom: '10px', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>📸 Fotos de Equipo Faltantes</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {stamps.filter(s => isTeamPhoto(s.id) && s.count === 0).map(s => (
-                    <span key={s.id} style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                    <span key={s.id} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
                       {s.id}
                     </span>
                   ))}
                   {stamps.filter(s => isTeamPhoto(s.id) && s.count === 0).length === 0 && (
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>¡Ya tienes todas las fotos de equipo!</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ marginBottom: '10px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>📸 Fotos de Equipo Pegadas</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {stamps.filter(s => isTeamPhoto(s.id) && s.count > 0).map(s => (
+                    <span key={s.id} style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                      {s.id} {s.count > 1 ? `(+${s.count - 1})` : ''}
+                    </span>
+                  ))}
+                  {stamps.filter(s => isTeamPhoto(s.id) && s.count > 0).length === 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Aún no tienes ninguna foto de equipo.</span>
                   )}
                 </div>
               </div>
