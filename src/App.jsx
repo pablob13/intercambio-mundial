@@ -1276,7 +1276,7 @@ function MainApp({ session, onLogout }) {
                   <div style={{ position: 'relative', display: 'inline-block', width: '40px', height: '40px' }}>
                     <Trophy size={40} color={a.condition ? '#FFD700' : '#475569'} strokeWidth={1.5} />
                     <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                      <a.icon size={14} color={a.condition ? 'var(--bg-color)' : '#94a3b8'} strokeWidth={3} />
+                      <a.icon size={18} color={a.condition ? a.color : '#94a3b8'} strokeWidth={2.5} />
                     </div>
                   </div>
                 </div>
@@ -2003,6 +2003,7 @@ function MainApp({ session, onLogout }) {
                     {unreadChats.friends[user.id] && <div style={{ position: 'absolute', top: -2, right: -2, width: '12px', height: '12px', backgroundColor: 'var(--danger)', borderRadius: '50%', border: '2px solid var(--panel-bg)' }} />}
                   </div>
                   {fName}
+                  {user.is_pro && <Crown size={16} color="#FFD700" />}
                 </h3>
               </div>
               <div style={{ display: 'flex', gap: '15px', fontSize: '0.85rem' }}>
@@ -2155,6 +2156,14 @@ function MainApp({ session, onLogout }) {
                 
                 {otherUsers.length > 0 && (
                   <div>
+                    {!isPro && (
+                      <div style={{ backgroundColor: 'rgba(255, 215, 0, 0.1)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255, 215, 0, 0.3)', marginBottom: '30px', textAlign: 'center' }}>
+                        <Crown size={32} color="#FFD700" style={{ marginBottom: '10px' }} />
+                        <h3 style={{ color: '#FFD700', marginTop: 0, marginBottom: '10px' }}>¿Quieres hablar con todos?</h3>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-main)', marginBottom: '15px' }}>Hazte PRO para enviar mensajes ilimitados y crear grupos.</p>
+                        <button className="btn btn-primary" onClick={() => setActiveTab('profile')} style={{ backgroundColor: '#FFD700', color: '#000', fontWeight: 'bold', border: 'none' }}>Ver Beneficios PRO</button>
+                      </div>
+                    )}
                     <AdBanner isPro={isPro} format="horizontal" />
                     <h3 style={{ marginBottom: '15px', color: 'var(--text-muted)' }}>Explorar Comunidad</h3>
                     {renderUserList(otherUsers)}
@@ -2703,7 +2712,7 @@ function MainApp({ session, onLogout }) {
               <div style={{ position: 'relative', display: 'inline-block', width: '80px', height: '80px' }}>
                 <Trophy size={80} color={selectedAchievement.condition ? '#FFD700' : '#475569'} strokeWidth={1.5} />
                 <div style={{ position: 'absolute', top: '35%', left: '50%', transform: 'translate(-50%, -50%)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <selectedAchievement.icon size={28} color={selectedAchievement.condition ? 'var(--bg-color)' : '#94a3b8'} strokeWidth={3} />
+                  <selectedAchievement.icon size={36} color={selectedAchievement.condition ? selectedAchievement.color : '#94a3b8'} strokeWidth={2.5} />
                 </div>
               </div>
             </div>
