@@ -349,6 +349,7 @@ function MainApp({ session, onLogout }) {
   const [groups, setGroups] = useState([]);
   const [communityTab, setCommunityTab] = useState('explorar');
   const [communitySearchQuery, setCommunitySearchQuery] = useState('');
+  const [communityShowOnlyPro, setCommunityShowOnlyPro] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [groupSubTab, setGroupSubTab] = useState('match'); // 'match', 'chat'
   const [groupMessages, setGroupMessages] = useState([]);
@@ -2135,8 +2136,12 @@ function MainApp({ session, onLogout }) {
     const confirmedFriendIds = friendRequests.filter(r => r.status === 'accepted').map(r => r.sender_id === session.user.id ? r.receiver_id : r.sender_id);
     const pendingReceivedIds = friendRequests.filter(r => r.status === 'pending' && r.receiver_id === session.user.id).map(r => r.sender_id);
     const filteredFriendsData = friendsData?.filter(u => {
-      if (!communitySearchQuery) return true;
       const fName = u.stamps_data?.ownerName || 'Usuario Anónimo';
+      const isUserPro = u.is_pro || PRO_NAMES.some(name => fName.toLowerCase().includes(name.toLowerCase()));
+      
+      if (communityShowOnlyPro && !isUserPro) return false;
+      
+      if (!communitySearchQuery) return true;
       return fName.toLowerCase().includes(communitySearchQuery.toLowerCase());
     }) || [];
 
@@ -2299,7 +2304,7 @@ function MainApp({ session, onLogout }) {
             ) : (
               <>
                 <div style={{ marginBottom: '20px', position: 'relative' }}>
-                  <Search size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <Search size={18} style={{ position: 'absolute', left: '15px', top: '25px', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     type="text"
                     className="search-input"
@@ -2308,6 +2313,16 @@ function MainApp({ session, onLogout }) {
                     onChange={(e) => setCommunitySearchQuery(e.target.value)}
                     style={{ paddingLeft: '45px', width: '100%', boxSizing: 'border-box' }}
                   />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                    <button 
+                      className={`filter-btn ${communityShowOnlyPro ? 'active' : ''}`}
+                      onClick={() => setCommunityShowOnlyPro(!communityShowOnlyPro)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', fontSize: '0.85rem' }}
+                    >
+                      <Crown size={14} color={communityShowOnlyPro ? "#000" : "#FFD700"} />
+                      Solo usuarios PRO
+                    </button>
+                  </div>
                 </div>
                 
                 {filteredFriendsData.length === 0 && communitySearchQuery && (
