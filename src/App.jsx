@@ -1007,9 +1007,44 @@ function MainApp({ session, onLogout }) {
               <li><strong>Libre de anuncios</strong></li>
               <li><strong>Insignia VIP dorada</strong> en tu perfil</li>
             </ul>
-            <button className="btn btn-primary" style={{ width: '100%', backgroundColor: '#FFD700', color: 'black', fontWeight: 'bold' }} onClick={() => alert("¡Pronto disponible! Integración de Stripe en proceso.")}>
-              <Star size={18} style={{ marginRight: '8px' }} /> Actualizar a PRO
-            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '15px' }}>
+              {/* Mensual Card */}
+              <div style={{ backgroundColor: 'var(--panel-bg)', border: '1px solid #FFD700', borderRadius: '12px', padding: '15px', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
+                <h4 style={{ margin: '0 0 10px 0', color: 'var(--text-muted)' }}>Suscripción</h4>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFD700', marginBottom: '5px' }}>$25<span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/mes</span></div>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid #FFD700', color: '#FFD700', marginTop: 'auto', padding: '10px 5px', fontSize: '0.9rem' }} 
+                  onClick={() => {
+                    const stripeLinkMensual = "ENLACE_MENSUAL_PENDIENTE";
+                    if (stripeLinkMensual === "ENLACE_MENSUAL_PENDIENTE") {
+                      alert("Aún falta configurar el enlace mensual de $25. Por favor proporciónalo.");
+                      return;
+                    }
+                    window.open(`${stripeLinkMensual}?client_reference_id=${session.user.id}`, '_blank');
+                  }}
+                >
+                  Mensual
+                </button>
+              </div>
+
+              {/* Vitalicio Card */}
+              <div style={{ backgroundColor: '#FFD700', border: '1px solid #FFD700', borderRadius: '12px', padding: '15px', textAlign: 'center', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ position: 'absolute', top: '12px', right: '-30px', backgroundColor: 'var(--danger)', color: 'white', fontSize: '0.6rem', fontWeight: 'bold', padding: '2px 30px', transform: 'rotate(45deg)' }}>MEJOR VALOR</div>
+                <h4 style={{ margin: '0 0 10px 0', color: 'black' }}>Pago Único</h4>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'black', marginBottom: '5px' }}>$120</div>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', backgroundColor: 'black', color: '#FFD700', border: 'none', marginTop: 'auto', padding: '10px 5px', fontSize: '0.9rem' }} 
+                  onClick={() => {
+                    const stripeLinkUnico = "https://buy.stripe.com/3cIfZgaEq4hr31v9QHabK00";
+                    window.open(`${stripeLinkUnico}?client_reference_id=${session.user.id}`, '_blank');
+                  }}
+                >
+                  De por vida
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
