@@ -614,6 +614,7 @@ function MainApp({ session, onLogout }) {
   const [newAlbumName, setNewAlbumName] = useState('');
   const [selectedAchievement, setSelectedAchievement] = useState(null);
   const [selectedMissingTeam, setSelectedMissingTeam] = useState(null);
+  const [selectedDuplicateTeam, setSelectedDuplicateTeam] = useState(null);
 
   useEffect(() => {
     if (Object.keys(expandedTeams).length === 0) {
@@ -1141,7 +1142,7 @@ function MainApp({ session, onLogout }) {
       { id: 'pro', title: 'Miembro PRO', icon: Crown, color: '#FFD700', condition: isPro, desc: 'Te uniste al club exclusivo PRO.', progressText: isPro ? '100%' : '0%' }
     ];
 
-    const teamStats = TEAMS.filter(t => t.code !== 'FWC' && t.code !== 'CC').map(t => {
+    const teamStats = TEAMS.map(t => {
       const teamStamps = stamps.filter(s => s.teamCode === t.code);
       const totalInTeam = teamStamps.length;
       const ownedInTeam = teamStamps.filter(s => s.count > 0).length;
@@ -1334,7 +1335,9 @@ function MainApp({ session, onLogout }) {
               <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>🔁 Más Repetidas</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {topDuplicates.length > 0 ? topDuplicates.slice(0, 5).map((t, idx) => (
-                  <div key={t.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
+                  <div key={t.code} 
+                    onClick={() => setSelectedDuplicateTeam(t)}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px', cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '1.2rem' }}>{t.flag}</span>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: idx === 0 ? 'bold' : 'normal' }}>{t.name}</span>
@@ -2779,6 +2782,50 @@ function MainApp({ session, onLogout }) {
             </div>
             
             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '20px' }} onClick={() => setSelectedMissingTeam(null)}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedDuplicateTeam && (
+        <div className="scanner-modal" onClick={() => setSelectedDuplicateTeam(null)}>
+          <div className="scanner-content fade-in" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '2rem' }}>{selectedDuplicateTeam.flag}</span>
+                {selectedDuplicateTeam.name}
+              </h2>
+              <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setSelectedDuplicateTeam(null)} />
+            </div>
+            
+            <div style={{ backgroundColor: 'rgba(220, 38, 38, 0.1)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(220, 38, 38, 0.3)', marginBottom: '20px', textAlign: 'center' }}>
+              <span style={{ color: 'var(--danger)', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                Tienes {selectedDuplicateTeam.duplicatesInTeam} repetidas
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))', gap: '10px', maxHeight: '40vh', overflowY: 'auto', paddingRight: '5px' }}>
+              {stamps.filter(s => s.teamCode === selectedDuplicateTeam.code && s.count > 1).map(s => (
+                <div key={s.id} style={{ 
+                  backgroundColor: 'rgba(220, 38, 38, 0.1)', 
+                  border: '1px solid rgba(220, 38, 38, 0.3)', 
+                  borderRadius: '8px', 
+                  padding: '10px 5px', 
+                  textAlign: 'center',
+                  color: 'var(--text-main)',
+                  position: 'relative'
+                }}>
+                  <div style={{ position: 'absolute', top: -5, right: -5, backgroundColor: 'var(--danger)', color: 'white', borderRadius: '50%', width: 20, height: 20, fontSize: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                    +{s.count - 1}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', marginBottom: '4px' }}>{s.teamCode}</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{s.number}</div>
+                </div>
+              ))}
+            </div>
+            
+            <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '20px', backgroundColor: 'var(--danger)', border: 'none' }} onClick={() => setSelectedDuplicateTeam(null)}>
               Cerrar
             </button>
           </div>
