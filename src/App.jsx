@@ -1083,7 +1083,12 @@ function MainApp({ session, localUser, onLogout }) {
             <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{allMembers.length} Miembros</p>
             <button onClick={async () => {
               if (window.confirm("¿Seguro que quieres abandonar este grupo?")) {
-                await supabase.from('group_members').delete().eq('group_id', group.id).eq('user_id', session?.user?.id);
+                const { error } = await supabase.from('group_members').delete().eq('group_id', group.id).eq('user_id', session?.user?.id);
+                if (error) {
+                  alert("Error de permisos en Supabase. Falta la regla de DELETE.");
+                  console.error(error);
+                  return;
+                }
                 setGroups(groups.map(g => {
                   if (g.id === group.id) {
                     return { ...g, group_members: g.group_members.filter(m => m.user_id !== session?.user?.id) };
@@ -1422,16 +1427,22 @@ function MainApp({ session, localUser, onLogout }) {
 
           const handleAcceptInvite = async (groupId) => {
             const { error } = await supabase.from('group_members').update({ status: 'accepted' }).match({ group_id: groupId, user_id: session.user.id });
-            if (!error) {
-              setGroups(prev => prev.map(g => g.id === groupId ? { ...g, group_members: g.group_members.map(m => m.user_id === session.user.id ? { ...m, status: 'accepted' } : m) } : g));
+            if (error) {
+              console.error(error);
+              alert("Error al conectarse a la base de datos. Pídele al administrador que configure los permisos RLS.");
+              return;
             }
+            setGroups(prev => prev.map(g => g.id === groupId ? { ...g, group_members: g.group_members.map(m => m.user_id === session.user.id ? { ...m, status: 'accepted' } : m) } : g));
           };
 
           const handleRejectInvite = async (groupId) => {
             const { error } = await supabase.from('group_members').delete().match({ group_id: groupId, user_id: session.user.id });
-            if (!error) {
-              setGroups(prev => prev.filter(g => g.id !== groupId));
+            if (error) {
+              console.error(error);
+              alert("Error al intentar salir. Necesitamos agregar el permiso de DELETE en Supabase.");
+              return;
             }
+            setGroups(prev => prev.filter(g => g.id !== groupId));
           };
 
           return (
