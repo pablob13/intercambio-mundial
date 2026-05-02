@@ -367,6 +367,21 @@ function MainApp({ session, onLogout }) {
   const [scanTargetTeam, setScanTargetTeam] = useState('FWC');
   const [pageScannerResults, setPageScannerResults] = useState(null);
   const [scanImageFile, setScanImageFile] = useState(null); // Para recopilar datos de entrenamiento
+  
+  const [inviteGroup, setInviteGroup] = useState(null);
+
+  useEffect(() => {
+    if (!session || !isCloud) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const groupId = urlParams.get('joinGroup');
+    if (groupId) {
+      supabase.from('sticker_groups').select('*').eq('id', groupId).single().then(({ data, error }) => {
+        if (data && !error) {
+          setInviteGroup(data);
+        }
+      });
+    }
+  }, [session, isCloud]);
 
 
   // Load Stamps
@@ -1677,6 +1692,13 @@ function MainApp({ session, onLogout }) {
             }} style={{ background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}>
               Abandonar Grupo
             </button>
+            <button onClick={() => {
+              const url = `${window.location.origin}/?joinGroup=${group.id}`;
+              navigator.clipboard.writeText(`¡Únete a mi grupo "${group.name}" en Mundial Estampas y hagamos intercambios masivos!\n\n${url}`);
+              alert('Enlace copiado al portapapeles. ¡Mándaselo a tus amigos por WhatsApp o Redes Sociales!');
+            }} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', marginLeft: '10px' }}>
+              Compartir Grupo
+            </button>
           </div>
         </div>
         
@@ -2870,6 +2892,45 @@ function MainApp({ session, onLogout }) {
           <span>Perfil</span>
         </button>
       </nav>
+
+      {inviteGroup && (
+        <div className="scanner-modal" style={{ zIndex: 9999 }}>
+          <div className="scanner-content" style={{ maxWidth: '400px', textAlign: 'center' }}>
+            <h2 style={{ color: 'var(--primary)', margin: '0 0 10px 0' }}>¡Te han invitado a un grupo!</h2>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '20px', color: 'var(--text-main)' }}>{inviteGroup.name}</h3>
+            <div style={{ textAlign: 'left', marginBottom: '25px', backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <h4 style={{ margin: '0 0 15px 0', color: 'var(--warning)', fontSize: '1.1rem', textAlign: 'center' }}>Ventajas de unirte:</h4>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: '0.95rem', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <li style={{ display: 'flex', alignItems: 'center' }}><ArrowRightLeft size={18} style={{ marginRight: '10px', color: 'var(--primary)' }} /> Match de estampas masivo</li>
+                <li style={{ display: 'flex', alignItems: 'center' }}><MessageCircle size={18} style={{ marginRight: '10px', color: 'var(--success)' }} /> Chat grupal en tiempo real</li>
+                <li style={{ display: 'flex', alignItems: 'center' }}><Users size={18} style={{ marginRight: '10px', color: 'var(--warning)' }} /> Encuentra coleccionistas activos</li>
+                <li style={{ display: 'flex', alignItems: 'center' }}><CheckCircle size={18} style={{ marginRight: '10px', color: '#00d2ff' }} /> Completa tu álbum más rápido</li>
+              </ul>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="btn btn-secondary" onClick={() => {
+                setInviteGroup(null);
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }} style={{ flex: 1, justifyContent: 'center' }}>Ahora no</button>
+              <button className="btn btn-primary" onClick={async () => {
+                const { error } = await supabase.from('group_members').insert({ group_id: inviteGroup.id, user_id: session.user.id });
+                if (!error) {
+                  alert('¡Te has unido al grupo!');
+                  setGroups(prev => [...prev, { ...inviteGroup, group_members: [{user_id: session.user.id}] }]);
+                  setInviteGroup(null);
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                  setActiveTab('friends');
+                  setCommunityTab('grupos');
+                } else {
+                  alert('Error al unirse al grupo o ya eres miembro.');
+                  setInviteGroup(null);
+                  window.history.replaceState({}, document.title, window.location.pathname);
+                }
+              }} style={{ flex: 1, justifyContent: 'center' }}>Unirme al Grupo</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {scannerMode === 'menu' && (
         <div className="scanner-modal" onClick={() => setScannerMode(null)}>
