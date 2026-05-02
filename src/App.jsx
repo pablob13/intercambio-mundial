@@ -272,6 +272,9 @@ function MainApp({ session, onLogout }) {
   const [friendRequests, setFriendRequests] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   
+  const [tradeGiveSelection, setTradeGiveSelection] = useState([]);
+  const [tradeReceiveSelection, setTradeReceiveSelection] = useState([]);
+  
   const [isPro, setIsPro] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -1501,7 +1504,7 @@ function MainApp({ session, onLogout }) {
         <div className="tab-content fade-in" style={{ paddingBottom: '30px' }}>
           <div className="header-card" style={{ marginBottom: '20px', padding: '15px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
-              <button onClick={() => setSelectedFriend(null)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-main)', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'all 0.2s ease', backdropFilter: 'blur(5px)' }} onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--primary)'; e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.transform = 'translateX(-2px)'; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.transform = 'none'; }}>
+              <button onClick={() => { setSelectedFriend(null); setTradeGiveSelection([]); setTradeReceiveSelection([]); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-main)', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'all 0.2s ease', backdropFilter: 'blur(5px)' }} onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--primary)'; e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'white'; e.currentTarget.style.transform = 'translateX(-2px)'; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'var(--text-main)'; e.currentTarget.style.transform = 'none'; }}>
                 <ArrowLeft size={20} />
               </button>
               <h2 style={{ margin: 0, flex: 1 }}>{friendName}</h2>
@@ -1538,26 +1541,167 @@ function MainApp({ session, onLogout }) {
               <div className="match-card give" style={{ marginBottom: '20px' }}>
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--warning)' }}><ArrowRightLeft size={20} /> Tú le das ({iGive.length})</h3>
                 <div className="stamps-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))' }}>
-                  {iGive.map(s => <button key={s.id} className="stamp-btn owned"><span className="stamp-id">{s.teamCode}<br/>{s.number}</span></button>)}
+                  {iGive.map(s => {
+                    const isSelected = tradeGiveSelection.includes(s.id);
+                    return (
+                      <button 
+                        key={s.id} 
+                        className={`stamp-btn owned ${isSelected ? 'selected' : ''}`} 
+                        style={isSelected ? { borderColor: 'white', transform: 'scale(1.1)', zIndex: 1, boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}}
+                        onClick={() => setTradeGiveSelection(prev => isSelected ? prev.filter(id => id !== s.id) : [...prev, s.id])}
+                      >
+                        <span className="stamp-id">{s.teamCode}<br/>{s.number}</span>
+                      </button>
+                    )
+                  })}
                   {iGive.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No tienes repetidas que le sirvan.</p>}
                 </div>
               </div>
               <div className="match-card receive">
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--success)' }}><ArrowRightLeft size={20} /> Te sirve ({iReceive.length})</h3>
                 <div className="stamps-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(60px, 1fr))' }}>
-                  {iReceive.map(s => <button key={s.id} className="stamp-btn"><span className="stamp-id">{s.teamCode}<br/>{s.number}</span></button>)}
+                  {iReceive.map(s => {
+                    const isSelected = tradeReceiveSelection.includes(s.id);
+                    return (
+                      <button 
+                        key={s.id} 
+                        className={`stamp-btn ${isSelected ? 'selected' : ''}`} 
+                        style={isSelected ? { borderColor: 'white', transform: 'scale(1.1)', zIndex: 1, boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}}
+                        onClick={() => setTradeReceiveSelection(prev => isSelected ? prev.filter(id => id !== s.id) : [...prev, s.id])}
+                      >
+                        <span className="stamp-id">{s.teamCode}<br/>{s.number}</span>
+                      </button>
+                    )
+                  })}
                   {iReceive.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No tiene repetidas que te sirvan.</p>}
                 </div>
               </div>
+
+              {(tradeGiveSelection.length > 0 || tradeReceiveSelection.length > 0) && (
+                <button 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', padding: '15px', justifyContent: 'center', marginTop: '20px', fontSize: '1.1rem' }}
+                  onClick={async () => {
+                    const msgContent = `[TRADE_PROPOSAL] ${JSON.stringify({ give: tradeGiveSelection, receive: tradeReceiveSelection })}`;
+                    const msg = { sender_id: session.user.id, receiver_id: selectedFriend.id, content: msgContent };
+                    await supabase.from('messages').insert([msg]);
+                    setFriendSubTab('chat');
+                    setTradeGiveSelection([]);
+                    setTradeReceiveSelection([]);
+                  }}
+                >
+                  <Handshake size={20} />
+                  Enviar Propuesta de Intercambio
+                </button>
+              )}
             </div>
           ) : (
             <div className="chat-container">
               <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '400px', overflowY: 'auto', padding: '10px', backgroundColor: 'var(--panel-bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                {messages.filter(m => (m.sender_id === session.user.id && m.receiver_id === selectedFriend.id) || (m.sender_id === selectedFriend.id && m.receiver_id === session.user.id)).map(msg => (
-                  <div key={msg.id} style={{ alignSelf: msg.sender_id === session.user.id ? 'flex-end' : 'flex-start', backgroundColor: msg.sender_id === session.user.id ? 'var(--primary)' : 'var(--border)', color: msg.sender_id === session.user.id ? 'white' : 'var(--text-main)', padding: '10px 15px', borderRadius: '15px', maxWidth: '80%' }}>
-                    {msg.content}
-                  </div>
-                ))}
+                {messages.filter(m => (m.sender_id === session.user.id && m.receiver_id === selectedFriend.id) || (m.sender_id === selectedFriend.id && m.receiver_id === session.user.id)).map(msg => {
+                  const isProposal = msg.content.startsWith('[TRADE_PROPOSAL]');
+                  const isAccepted = msg.content.startsWith('[TRADE_ACCEPTED]');
+
+                  if (isProposal || isAccepted) {
+                    try {
+                      const tradeData = JSON.parse(msg.content.replace(/\[TRADE_PROPOSAL\] |\[TRADE_ACCEPTED\] /, ''));
+                      const amISender = msg.sender_id === session.user.id;
+                      const myGiveList = amISender ? tradeData.give : tradeData.receive;
+                      const myReceiveList = amISender ? tradeData.receive : tradeData.give;
+
+                      const handleAcceptTrade = async () => {
+                        const { data: users, error: fetchErr } = await supabase.from('user_stamps').select('*').in('user_id', [msg.sender_id, msg.receiver_id]);
+                        if (fetchErr || !users || users.length !== 2) {
+                          alert("Error al contactar servidor.");
+                          return;
+                        }
+                        
+                        const senderRow = users.find(u => u.user_id === msg.sender_id);
+                        const receiverRow = users.find(u => u.user_id === msg.receiver_id);
+                        
+                        const processAlbum = (row, isSenderUser) => {
+                          const newStampsData = JSON.parse(JSON.stringify(row.stamps_data));
+                          const activeAlbum = newStampsData.albums.find(a => a.id === newStampsData.activeAlbumId);
+                          if (!activeAlbum) return newStampsData;
+                          
+                          tradeData.give.forEach(id => {
+                            const stamp = activeAlbum.stamps.find(s => s.id === id);
+                            if (stamp) {
+                              if (isSenderUser) { if (stamp.count > 0) stamp.count--; } else { stamp.count++; }
+                            }
+                          });
+                          
+                          tradeData.receive.forEach(id => {
+                            const stamp = activeAlbum.stamps.find(s => s.id === id);
+                            if (stamp) {
+                              if (isSenderUser) { stamp.count++; } else { if (stamp.count > 0) stamp.count--; }
+                            }
+                          });
+                          return newStampsData;
+                        };
+
+                        const newSenderData = processAlbum(senderRow, true);
+                        const newReceiverData = processAlbum(receiverRow, false);
+
+                        const { error: upsertErr } = await supabase.from('user_stamps').upsert([
+                          { ...senderRow, stamps_data: newSenderData, updated_at: new Date().toISOString() },
+                          { ...receiverRow, stamps_data: newReceiverData, updated_at: new Date().toISOString() }
+                        ]);
+
+                        if (upsertErr) {
+                          alert("Error de seguridad: Ambos usuarios deben tener la sesión activa o necesitas un servidor.");
+                          return;
+                        }
+
+                        const newContent = msg.content.replace('[TRADE_PROPOSAL]', '[TRADE_ACCEPTED]');
+                        await supabase.from('messages').update({ content: newContent }).eq('id', msg.id);
+                        setAlbumsState(newReceiverData);
+                        setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, content: newContent } : m));
+                      };
+
+                      return (
+                        <div key={msg.id} style={{ alignSelf: 'center', backgroundColor: 'var(--panel-bg)', border: `1px solid ${isAccepted ? 'var(--success)' : 'var(--primary)'}`, borderRadius: '12px', padding: '15px', maxWidth: '90%', width: '100%', marginBottom: '10px' }}>
+                          <h4 style={{ margin: '0 0 15px 0', textAlign: 'center', color: isAccepted ? 'var(--success)' : 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                            <Handshake size={20} /> {isAccepted ? 'Intercambio Realizado' : 'Propuesta de Intercambio'}
+                          </h4>
+                          <div style={{ display: 'flex', gap: '15px', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <div style={{ flex: 1, textAlign: 'center' }}>
+                              <strong style={{ fontSize: '0.8rem', color: 'var(--warning)', display: 'block', marginBottom: '5px' }}>Tú Das</strong>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
+                                {myGiveList.map(id => <span key={id} className="badge-active" style={{ backgroundColor: 'var(--warning)', fontSize: '0.7rem' }}>{id}</span>)}
+                                {myGiveList.length === 0 && <span style={{ color: 'var(--text-muted)' }}>Nada</span>}
+                              </div>
+                            </div>
+                            <div style={{ flex: 1, textAlign: 'center' }}>
+                              <strong style={{ fontSize: '0.8rem', color: 'var(--success)', display: 'block', marginBottom: '5px' }}>Tú Recibes</strong>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
+                                {myReceiveList.map(id => <span key={id} className="badge-active" style={{ backgroundColor: 'var(--success)', fontSize: '0.7rem' }}>{id}</span>)}
+                                {myReceiveList.length === 0 && <span style={{ color: 'var(--text-muted)' }}>Nada</span>}
+                              </div>
+                            </div>
+                          </div>
+                          {!amISender && !isAccepted ? (
+                            <button className="btn btn-success" style={{ width: '100%', justifyContent: 'center' }} onClick={handleAcceptTrade}>
+                              Aceptar Intercambio
+                            </button>
+                          ) : isAccepted ? (
+                            <div style={{ textAlign: 'center', color: 'var(--success)', fontWeight: 'bold' }}>✓ Estampas Actualizadas</div>
+                          ) : (
+                            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Esperando respuesta...</div>
+                          )}
+                        </div>
+                      );
+                    } catch (e) {
+                      return <div key={msg.id} style={{ color: 'var(--danger)', textAlign: 'center' }}>Propuesta inválida</div>
+                    }
+                  }
+
+                  return (
+                    <div key={msg.id} style={{ alignSelf: msg.sender_id === session.user.id ? 'flex-end' : 'flex-start', backgroundColor: msg.sender_id === session.user.id ? 'var(--primary)' : 'var(--border)', color: msg.sender_id === session.user.id ? 'white' : 'var(--text-main)', padding: '10px 15px', borderRadius: '15px', maxWidth: '80%' }}>
+                      {msg.content}
+                    </div>
+                  );
+                })}
                 <div ref={chatScrollRef} />
               </div>
               <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
