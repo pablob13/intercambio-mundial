@@ -221,6 +221,14 @@ const isEscudo = (id) => {
   return num === '1' && code !== 'FWC' && code !== 'CC';
 };
 
+const isTeamPhoto = (id) => {
+  if (!id) return false;
+  const parts = id.split(' ');
+  const code = parts[0];
+  const num = parts[1];
+  return num === '13' && code !== 'FWC' && code !== 'CC';
+};
+
 const AdBanner = ({ isPro, format = 'horizontal' }) => {
   if (isPro) return null; // PRO users never see ads
   
@@ -647,6 +655,7 @@ function MainApp({ session, onLogout }) {
   
   // Trade Modal State
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [isSpecialStampsModalOpen, setIsSpecialStampsModalOpen] = useState(false);
   const [tradeOnlyEscudos, setTradeOnlyEscudos] = useState(false);
   const [tradeGiven, setTradeGiven] = useState([]); 
   const [tradeReceived, setTradeReceived] = useState([]);
@@ -1356,9 +1365,12 @@ function MainApp({ session, onLogout }) {
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f59e0b' }}>{faltantesTotales}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Faltantes</div>
             </div>
-            <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)', gridColumn: 'span 2' }}>
+            <div 
+              style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)', gridColumn: 'span 2', cursor: 'pointer' }}
+              onClick={() => setIsSpecialStampsModalOpen(true)}
+            >
               <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3b82f6' }}>{escudosOwned} <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>/ {totalEscudos}</span></div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Escudos Pegados</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Escudos Pegados <span style={{fontSize: '0.7rem', opacity: 0.8}}>(Ver Faltantes)</span></div>
             </div>
           </div>
           
@@ -1919,7 +1931,7 @@ function MainApp({ session, onLogout }) {
                         style={isSelected ? { borderColor: 'white', transform: 'scale(1.1)', zIndex: 1, boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}}
                         onClick={() => setTradeGiveSelection(prev => isSelected ? prev.filter(id => id !== s.id) : [...prev, s.id])}
                       >
-                        <span className="stamp-id">{s.teamCode}<br/>{s.number} {isEscudo(s.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}</span>
+                        <span className="stamp-id">{s.teamCode}<br/>{s.number} {isEscudo(s.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}{isTeamPhoto(s.id) && <span style={{fontSize: '0.8rem'}}>📸</span>}</span>
                       </button>
                     )
                   })}
@@ -1938,7 +1950,7 @@ function MainApp({ session, onLogout }) {
                         style={isSelected ? { borderColor: 'white', transform: 'scale(1.1)', zIndex: 1, boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}}
                         onClick={() => setTradeReceiveSelection(prev => isSelected ? prev.filter(id => id !== s.id) : [...prev, s.id])}
                       >
-                        <span className="stamp-id">{s.teamCode}<br/>{s.number} {isEscudo(s.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}</span>
+                        <span className="stamp-id">{s.teamCode}<br/>{s.number} {isEscudo(s.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}{isTeamPhoto(s.id) && <span style={{fontSize: '0.8rem'}}>📸</span>}</span>
                       </button>
                     )
                   })}
@@ -2484,7 +2496,7 @@ function MainApp({ session, onLogout }) {
                               style={{ zIndex: 1, ...(isSelected ? { borderColor: 'white', transform: 'scale(1.1)', boxShadow: '0 0 10px rgba(255,255,255,0.5)' } : {}) }} 
                               onClick={() => handleStampClick(stamp)}
                             >
-                              <span className="stamp-id">{stamp.teamCode}<br/>{stamp.number} {isEscudo(stamp.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}</span>
+                              <span className="stamp-id">{stamp.teamCode}<br/>{stamp.number} {isEscudo(stamp.id) && <span style={{fontSize: '0.8rem'}}>🛡️</span>}{isTeamPhoto(stamp.id) && <span style={{fontSize: '0.8rem'}}>📸</span>}</span>
                               {stamp.count > 1 && <div className="badge duplicate">+{stamp.count - 1}</div>}
                               {stamp.count === 1 && <div className="badge"><Check size={12} /></div>}
                             </button>
@@ -2609,7 +2621,7 @@ function MainApp({ session, onLogout }) {
                       
                       return (
                         <button key={s.id} onClick={() => { if (canAdd) addToTradeGiven(s); }} disabled={!canAdd} style={{ background: canAdd ? 'var(--primary)' : 'var(--panel-bg)', color: canAdd ? 'white' : 'var(--text-muted)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: '8px', cursor: canAdd ? 'pointer' : 'not-allowed', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '50px' }}>
-                          <span style={{ fontWeight: 'bold' }}>{s.number} {isEscudo(s.id) && '🛡️'}</span>
+                          <span style={{ fontWeight: 'bold' }}>{s.number} {isEscudo(s.id) && '🛡️'}{isTeamPhoto(s.id) && '📸'}</span>
                           <span style={{ fontSize: '0.7rem' }}>Disp: {maxAvailable - currentlySelected}</span>
                         </button>
                       );
@@ -2647,7 +2659,7 @@ function MainApp({ session, onLogout }) {
                       
                       return (
                         <button key={s.id} onClick={() => { if (canAdd) addToTradeReceived(s); }} disabled={!canAdd} style={{ background: canAdd ? 'var(--success)' : 'var(--panel-bg)', color: canAdd ? 'white' : 'var(--text-muted)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: '8px', cursor: canAdd ? 'pointer' : 'not-allowed', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '50px' }}>
-                          <span style={{ fontWeight: 'bold' }}>{s.number} {isEscudo(s.id) && '🛡️'}</span>
+                          <span style={{ fontWeight: 'bold' }}>{s.number} {isEscudo(s.id) && '🛡️'}{isTeamPhoto(s.id) && '📸'}</span>
                         </button>
                       );
                     })}
@@ -2664,6 +2676,47 @@ function MainApp({ session, onLogout }) {
           </div>
         </div>
       )}
+      {isSpecialStampsModalOpen && (
+        <div className="scanner-modal" onClick={() => setIsSpecialStampsModalOpen(false)}>
+          <div className="scanner-content" style={{ maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>Especiales Faltantes</h2>
+              <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setIsSpecialStampsModalOpen(false)} />
+            </div>
+            
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <h3 style={{ marginBottom: '10px', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>🛡️ Escudos</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {stamps.filter(s => isEscudo(s.id) && s.count === 0).map(s => (
+                    <span key={s.id} style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                      {s.id}
+                    </span>
+                  ))}
+                  {stamps.filter(s => isEscudo(s.id) && s.count === 0).length === 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>¡Ya tienes todos los escudos!</span>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h3 style={{ marginBottom: '10px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>📸 Fotos de Equipo</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {stamps.filter(s => isTeamPhoto(s.id) && s.count === 0).map(s => (
+                    <span key={s.id} style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                      {s.id}
+                    </span>
+                  ))}
+                  {stamps.filter(s => isTeamPhoto(s.id) && s.count === 0).length === 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>¡Ya tienes todas las fotos de equipo!</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ paddingBottom: '80px' }}></div> {/* Spacer for bottom nav */}
     </div>
   );
