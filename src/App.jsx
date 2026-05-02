@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 
@@ -1612,7 +1612,7 @@ function MainApp({ session, localUser, onLogout }) {
         </button>
         
         <button className="btn btn-secondary" style={{ flex: 1, justifyContent: 'center', borderColor: 'var(--warning)', color: 'var(--warning)' }} onClick={() => setIsTradeModalOpen(true)}>
-          🔄 Intercambiar
+          <Handshake size={20} /> Pactar Intercambio
         </button>
 
         {scannedNumbers.length > 0 && (
@@ -1732,7 +1732,7 @@ function MainApp({ session, localUser, onLogout }) {
         <div className="scanner-modal" onClick={() => setIsTradeModalOpen(false)}>
           <div className="scanner-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, color: 'var(--warning)' }}>🔄 Intercambio</h2>
+              <h2 style={{ margin: 0, color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '8px' }}><Handshake size={28} /> Pactar Intercambio</h2>
               <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setIsTradeModalOpen(false)} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'left' }}>
