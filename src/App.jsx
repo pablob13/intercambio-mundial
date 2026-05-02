@@ -381,6 +381,7 @@ function MainApp({ session, onLogout }) {
       setShowProInvite(true);
     }
 
+    const groupId = urlGroupId || storedGroupId;
     if (groupId) {
       supabase.from('sticker_groups').select('*').eq('id', groupId).single().then(({ data, error }) => {
         if (data && !error) {
