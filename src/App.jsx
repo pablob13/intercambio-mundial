@@ -341,6 +341,8 @@ function MainApp({ session, onLogout }) {
   
   const [tradeGiveSelection, setTradeGiveSelection] = useState([]);
   const [tradeReceiveSelection, setTradeReceiveSelection] = useState([]);
+  const [isSendingProposal, setIsSendingProposal] = useState(false);
+  const [isProcessingTrade, setIsProcessingTrade] = useState({});
   
   const [isPro, setIsPro] = useState(PRO_EMAILS.includes(session?.user?.email?.toLowerCase()));
   const [paywallFeature, setPaywallFeature] = useState(null);
@@ -1962,18 +1964,25 @@ function MainApp({ session, onLogout }) {
               {(tradeGiveSelection.length > 0 || tradeReceiveSelection.length > 0) && (
                 <button 
                   className="btn btn-primary" 
-                  style={{ width: '100%', padding: '15px', justifyContent: 'center', marginTop: '20px', fontSize: '1.1rem' }}
+                  disabled={isSendingProposal}
+                  style={{ width: '100%', padding: '15px', justifyContent: 'center', marginTop: '20px', fontSize: '1.1rem', opacity: isSendingProposal ? 0.7 : 1, cursor: isSendingProposal ? 'not-allowed' : 'pointer' }}
                   onClick={async () => {
-                    const msgContent = `[TRADE_PROPOSAL] ${JSON.stringify({ give: tradeGiveSelection, receive: tradeReceiveSelection })}`;
-                    const msg = { sender_id: session.user.id, receiver_id: selectedFriend.id, content: msgContent };
-                    await supabase.from('messages').insert([msg]);
-                    setFriendSubTab('chat');
-                    setTradeGiveSelection([]);
-                    setTradeReceiveSelection([]);
+                    if (isSendingProposal) return;
+                    setIsSendingProposal(true);
+                    try {
+                      const msgContent = `[TRADE_PROPOSAL] ${JSON.stringify({ give: tradeGiveSelection, receive: tradeReceiveSelection })}`;
+                      const msg = { sender_id: session.user.id, receiver_id: selectedFriend.id, content: msgContent };
+                      await supabase.from('messages').insert([msg]);
+                      setFriendSubTab('chat');
+                      setTradeGiveSelection([]);
+                      setTradeReceiveSelection([]);
+                    } finally {
+                      setIsSendingProposal(false);
+                    }
                   }}
                 >
                   <Handshake size={20} />
-                  Enviar Propuesta de Intercambio
+                  {isSendingProposal ? 'Enviando...' : 'Enviar Propuesta de Intercambio'}
                 </button>
               )}
             </div>
@@ -1992,56 +2001,75 @@ function MainApp({ session, onLogout }) {
                       const myReceiveList = amISender ? tradeData.receive : tradeData.give;
 
                       const handleAcceptTrade = async () => {
-                        const { data: users, error: fetchErr } = await supabase.from('user_stamps').select('*').in('id', [msg.sender_id, msg.receiver_id]);
-                        if (fetchErr || !users || users.length !== 2) {
-                          alert("Error al contactar servidor.");
-                          return;
-                        }
-                        
-                        const senderRow = users.find(u => u.id === msg.sender_id);
-                        const receiverRow = users.find(u => u.id === msg.receiver_id);
-                        
-                        const processAlbum = (row, isSenderUser) => {
-                          const newStampsData = JSON.parse(JSON.stringify(row.stamps_data));
-                          const activeAlbum = newStampsData.albums.find(a => a.id === newStampsData.activeAlbumId);
-                          if (!activeAlbum) return newStampsData;
+                        if (isProcessingTrade[msg.id]) return;
+                        setIsProcessingTrade(prev => ({ ...prev, [msg.id]: true }));
+
+                        try {
+                          const { data: users, error: fetchErr } = await supabase.from('user_stamps').select('*').in('id', [msg.sender_id, msg.receiver_id]);
+                          if (fetchErr || !users || users.length !== 2) {
+                            alert("Error al contactar servidor.");
+                            return;
+                          }
                           
-                          tradeData.give.forEach(id => {
-                            const stamp = activeAlbum.stamps.find(s => s.id === id);
-                            if (stamp) {
-                              if (isSenderUser) { if (stamp.count > 0) stamp.count--; } else { stamp.count++; }
-                            }
-                          });
+                          const senderRow = users.find(u => u.id === msg.sender_id);
+                          const receiverRow = users.find(u => u.id === msg.receiver_id);
                           
+                          let canFulfill = true;
+
+                          const processAlbum = (row, isSenderUser) => {
+                            const newStampsData = JSON.parse(JSON.stringify(row.stamps_data));
+                            const activeAlbum = newStampsData.albums.find(a => a.id === newStampsData.activeAlbumId);
+                            if (!activeAlbum) return newStampsData;
+                            
+                            tradeData.give.forEach(id => {
+                              const stamp = activeAlbum.stamps.find(s => s.id === id);
+                              if (isSenderUser) {
+                                if (!stamp || stamp.count <= 1) canFulfill = false;
+                                else stamp.count--;
+                              } else {
+                                if (stamp) stamp.count++;
+                              }
+                            });
                           tradeData.receive.forEach(id => {
-                            const stamp = activeAlbum.stamps.find(s => s.id === id);
-                            if (stamp) {
-                              if (isSenderUser) { stamp.count++; } else { if (stamp.count > 0) stamp.count--; }
-                            }
+                              const stamp = activeAlbum.stamps.find(s => s.id === id);
+                              if (!isSenderUser) {
+                                if (!stamp || stamp.count <= 1) canFulfill = false;
+                                else stamp.count--;
+                              } else {
+                                if (stamp) stamp.count++;
+                              }
+                            });
+                            return newStampsData;
+                          };
+
+                          const newSenderData = processAlbum(senderRow, true);
+                          const newReceiverData = processAlbum(receiverRow, false);
+
+                          if (!canFulfill) {
+                            alert("Ya no se puede realizar este intercambio porque alguno de los usuarios ya no tiene las repetidas necesarias.");
+                            return;
+                          }
+
+                          const { error: upsertErr } = await supabase.rpc('execute_trade', {
+                            p_sender_id: msg.sender_id,
+                            p_receiver_id: msg.receiver_id,
+                            p_new_sender_data: newSenderData,
+                            p_new_receiver_data: newReceiverData
                           });
-                          return newStampsData;
-                        };
 
-                        const newSenderData = processAlbum(senderRow, true);
-                        const newReceiverData = processAlbum(receiverRow, false);
+                          if (upsertErr) {
+                            alert("Error de seguridad al ejecutar intercambio. Por favor corre el script SQL en Supabase para activar la función execute_trade.");
+                            console.error(upsertErr);
+                            return;
+                          }
 
-                        const { error: upsertErr } = await supabase.rpc('execute_trade', {
-                          p_sender_id: msg.sender_id,
-                          p_receiver_id: msg.receiver_id,
-                          p_new_sender_data: newSenderData,
-                          p_new_receiver_data: newReceiverData
-                        });
-
-                        if (upsertErr) {
-                          alert("Error de seguridad al ejecutar intercambio. Por favor corre el script SQL en Supabase para activar la función execute_trade.");
-                          console.error(upsertErr);
-                          return;
+                          const newContent = msg.content.replace('[TRADE_PROPOSAL]', '[TRADE_ACCEPTED]');
+                          await supabase.from('messages').update({ content: newContent }).eq('id', msg.id);
+                          setAlbumsState(newReceiverData);
+                          setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, content: newContent } : m));
+                        } finally {
+                          setIsProcessingTrade(prev => ({ ...prev, [msg.id]: false }));
                         }
-
-                        const newContent = msg.content.replace('[TRADE_PROPOSAL]', '[TRADE_ACCEPTED]');
-                        await supabase.from('messages').update({ content: newContent }).eq('id', msg.id);
-                        setAlbumsState(newReceiverData);
-                        setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, content: newContent } : m));
                       };
 
                       return (
@@ -2066,8 +2094,13 @@ function MainApp({ session, onLogout }) {
                             </div>
                           </div>
                           {!amISender && !isAccepted ? (
-                            <button className="btn btn-success" style={{ width: '100%', justifyContent: 'center' }} onClick={handleAcceptTrade}>
-                              Aceptar Intercambio
+                            <button 
+                              className="btn btn-success" 
+                              disabled={isProcessingTrade[msg.id]}
+                              style={{ width: '100%', justifyContent: 'center', opacity: isProcessingTrade[msg.id] ? 0.7 : 1, cursor: isProcessingTrade[msg.id] ? 'not-allowed' : 'pointer' }} 
+                              onClick={handleAcceptTrade}
+                            >
+                              {isProcessingTrade[msg.id] ? 'Procesando...' : 'Aceptar Intercambio'}
                             </button>
                           ) : isAccepted ? (
                             <div style={{ textAlign: 'center', color: 'var(--success)', fontWeight: 'bold' }}>✓ Estampas Actualizadas</div>
