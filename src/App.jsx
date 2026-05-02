@@ -646,7 +646,33 @@ function MainApp({ session, onLogout }) {
     );
   }
 
+  const vibrate = (pattern = 30) => {
+    if (navigator.vibrate) {
+      try { navigator.vibrate(pattern); } catch(e) {}
+    }
+  };
+
+  const playPopSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {}
+  };
+
   const handleStampClick = (stamp) => {
+    vibrate(30);
+    playPopSound();
+
     if (selectionMode) {
       if (selectedStamps.includes(stamp.id)) {
         setSelectedStamps(prev => prev.filter(id => id !== stamp.id));
@@ -1094,7 +1120,23 @@ function MainApp({ session, onLogout }) {
     </div>
   );
 
-  const renderProfileTab = () => (
+  const renderProfileTab = () => {
+    const totalStampsCount = stamps.reduce((acc, s) => acc + s.count, 0);
+    const ownedStampsCount = stamps.filter(s => s.count > 0).length;
+    const progressPercent = Math.round((ownedStampsCount / stamps.length) * 100) || 0;
+    const packsOpened = Math.ceil(totalStampsCount / 5);
+    const estimatedCost = packsOpened * 18; // 18 MXN por sobre
+
+    const achievements = [
+      { id: 'first_blood', title: 'Primera Estampa', icon: '🎯', condition: ownedStampsCount > 0, desc: 'Pegaste tu primera estampa.' },
+      { id: 'first_team', title: 'Conquistador', icon: '🌍', condition: TEAMS.some(t => { const teamStamps = stamps.filter(s => s.teamCode === t.code); return teamStamps.length > 0 && teamStamps.every(s => s.count > 0); }), desc: 'Completaste tu primer país.' },
+      { id: 'collector', title: 'Coleccionista', icon: '📦', condition: ownedStampsCount >= 100, desc: 'Llegaste a 100 estampas pegadas.' },
+      { id: 'trader', title: 'Negociador', icon: '🤝', condition: tradeGiven.length > 0 || tradeReceived.length > 0, desc: 'Comenzaste a planear intercambios.' },
+      { id: 'social', title: 'Amigable', icon: '🗣️', condition: (friendsData?.length || 0) >= 3, desc: 'Tienes 3 o más amigos en la comunidad.' },
+      { id: 'pro', title: 'Miembro PRO', icon: '👑', condition: isPro, desc: 'Te uniste al club exclusivo PRO.' }
+    ];
+
+    return (
     <div className="tab-content fade-in">
       <div className="profile-card">
         <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '20px' }}>
@@ -1165,6 +1207,74 @@ function MainApp({ session, onLogout }) {
             </div>
           </div>
         )}
+
+        <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
+          <h3 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><Star size={20} color="#3b82f6" /> Mi Progreso y Gastos</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{progressPercent}%</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Álbum Completado</div>
+            </div>
+            <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{packsOpened}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sobres Abiertos</div>
+            </div>
+            <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>${estimatedCost}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Gasto Estimado</div>
+            </div>
+          </div>
+          
+          <h4 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>Logros Desbloqueados</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
+            {achievements.map(a => (
+              <div key={a.id} style={{ 
+                backgroundColor: a.condition ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)', 
+                border: `1px solid ${a.condition ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, 
+                borderRadius: '12px', padding: '10px', textAlign: 'center',
+                opacity: a.condition ? 1 : 0.4,
+                filter: a.condition ? 'none' : 'grayscale(100%)'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '5px' }}>{a.icon}</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? 'var(--text-main)' : 'var(--text-muted)' }}>{a.title}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
+          <h3 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}><Star size={20} color="#3b82f6" /> Mi Progreso y Gastos</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{progressPercent}%</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Álbum Completado</div>
+            </div>
+            <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{packsOpened}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sobres Abiertos</div>
+            </div>
+            <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--danger)' }}>${estimatedCost}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Gasto Estimado</div>
+            </div>
+          </div>
+          
+          <h4 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>Logros Desbloqueados</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
+            {achievements.map(a => (
+              <div key={a.id} style={{ 
+                backgroundColor: a.condition ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)', 
+                border: `1px solid ${a.condition ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, 
+                borderRadius: '12px', padding: '10px', textAlign: 'center',
+                opacity: a.condition ? 1 : 0.4,
+                filter: a.condition ? 'none' : 'grayscale(100%)'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '5px' }}>{a.icon}</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? 'var(--text-main)' : 'var(--text-muted)' }}>{a.title}</div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
           <h3 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
