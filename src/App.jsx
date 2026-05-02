@@ -1079,7 +1079,23 @@ function MainApp({ session, localUser, onLogout }) {
             </button>
             <h2 style={{ margin: 0, flex: 1 }}>{group.name}</h2>
           </div>
-          <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{allMembers.length} Miembros</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{allMembers.length} Miembros</p>
+            <button onClick={async () => {
+              if (window.confirm("¿Seguro que quieres abandonar este grupo?")) {
+                await supabase.from('group_members').delete().eq('group_id', group.id).eq('user_id', session?.user?.id);
+                setGroups(groups.map(g => {
+                  if (g.id === group.id) {
+                    return { ...g, group_members: g.group_members.filter(m => m.user_id !== session?.user?.id) };
+                  }
+                  return g;
+                }));
+                setSelectedGroup(null);
+              }
+            }} style={{ background: 'transparent', border: '1px solid var(--danger)', color: 'var(--danger)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}>
+              Abandonar Grupo
+            </button>
+          </div>
         </div>
         
         <div className="filters" style={{ marginBottom: '20px' }}>
@@ -1760,6 +1776,10 @@ function MainApp({ session, localUser, onLogout }) {
     </div>
   );
 
+  const pendingReceivedCount = friendRequests.filter(r => r.status === 'pending' && r.receiver_id === session?.user?.id).length;
+  const myInvitesCount = groups.filter(g => g.group_members?.some(m => m.user_id === session?.user?.id && m.status === 'pending')).length;
+  const totalPending = pendingReceivedCount + myInvitesCount;
+
   return (
     <div className={`app-container ${albumsState?.theme === 'mexico' ? 'theme-mexico' : ''}`}>
       <div className="main-content-scroll">
@@ -1774,8 +1794,9 @@ function MainApp({ session, localUser, onLogout }) {
           <BookOpen size={24} />
           <span>Colección</span>
         </button>
-        <button className={`nav-item ${activeTab === 'friends' ? 'active' : ''}`} onClick={() => { setActiveTab('friends'); setSelectedFriend(null); }}>
+        <button className={`nav-item ${activeTab === 'friends' ? 'active' : ''}`} onClick={() => { setActiveTab('friends'); setSelectedFriend(null); }} style={{ position: 'relative' }}>
           <Users size={24} />
+          {totalPending > 0 && <span style={{ position: 'absolute', top: '5px', right: '50%', transform: 'translateX(15px)', backgroundColor: 'var(--danger)', color: 'white', borderRadius: '50%', width: '18px', height: '18px', fontSize: '0.7rem', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold' }}>{totalPending}</span>}
           <span>Comunidad</span>
         </button>
         <button className={`nav-item ${activeTab === 'albums' ? 'active' : ''}`} onClick={() => setActiveTab('albums')}>
