@@ -1125,7 +1125,7 @@ function MainApp({ session, onLogout }) {
     const ownedStampsCount = stamps.filter(s => s.count > 0).length;
     const progressPercent = Math.round((ownedStampsCount / stamps.length) * 100) || 0;
     const packsOpened = Math.ceil(totalStampsCount / 5);
-    const estimatedCost = packsOpened * 18; // 18 MXN por sobre
+    const estimatedCost = packsOpened * 25; // 25 MXN por sobre
 
     const achievements = [
       { id: 'first_blood', title: 'Primera Estampa', icon: '🎯', condition: ownedStampsCount > 0, desc: 'Pegaste tu primera estampa.' },
