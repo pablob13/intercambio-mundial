@@ -1016,11 +1016,7 @@ function MainApp({ session, onLogout }) {
                   className="btn btn-primary" 
                   style={{ width: '100%', backgroundColor: 'transparent', border: '1px solid #FFD700', color: '#FFD700', marginTop: 'auto', padding: '10px 5px', fontSize: '0.9rem' }} 
                   onClick={() => {
-                    const stripeLinkMensual = "ENLACE_MENSUAL_PENDIENTE";
-                    if (stripeLinkMensual === "ENLACE_MENSUAL_PENDIENTE") {
-                      alert("Aún falta configurar el enlace mensual de $25. Por favor proporciónalo.");
-                      return;
-                    }
+                    const stripeLinkMensual = "https://buy.stripe.com/3cIfZgaEq4hr31v9QHabK00";
                     window.open(`${stripeLinkMensual}?client_reference_id=${session.user.id}`, '_blank');
                   }}
                 >
@@ -1037,7 +1033,7 @@ function MainApp({ session, onLogout }) {
                   className="btn btn-primary" 
                   style={{ width: '100%', backgroundColor: 'black', color: '#FFD700', border: 'none', marginTop: 'auto', padding: '10px 5px', fontSize: '0.9rem' }} 
                   onClick={() => {
-                    const stripeLinkUnico = "https://buy.stripe.com/3cIfZgaEq4hr31v9QHabK00";
+                    const stripeLinkUnico = "https://buy.stripe.com/8x28wOaEq01b7hLgf5abK01";
                     window.open(`${stripeLinkUnico}?client_reference_id=${session.user.id}`, '_blank');
                   }}
                 >
