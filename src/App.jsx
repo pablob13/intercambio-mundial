@@ -149,35 +149,40 @@ const generateInitialStamps = () => {
 };
 
 const AdBanner = ({ isPro, format = 'horizontal' }) => {
+  useEffect(() => {
+    if (!isPro) {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.error("AdSense Error:", e);
+      }
+    }
+  }, [isPro]);
+
   if (isPro) return null; // PRO users never see ads
   
   return (
     <div style={{
       width: '100%',
       backgroundColor: 'rgba(255,255,255,0.02)',
-      border: '1px dashed var(--border)',
-      borderRadius: '12px',
-      padding: format === 'horizontal' ? '15px' : '30px 15px',
       margin: '20px 0',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      color: 'var(--text-muted)'
+      overflow: 'hidden'
     }}>
-      <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>Publicidad</span>
-      <div style={{ 
-        width: '100%', 
-        height: format === 'horizontal' ? '60px' : '200px', 
-        backgroundColor: 'rgba(0,0,0,0.2)', 
-        borderRadius: '8px',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: '0.9rem'
-      }}>
-        [Espacio Reservado para Google AdSense]
+      <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px', color: 'var(--text-muted)' }}>Publicidad</span>
+      
+      <div style={{ width: '100%', minHeight: format === 'horizontal' ? '90px' : '250px', display: 'flex', justifyContent: 'center' }}>
+        <ins className="adsbygoogle"
+             style={{ display: 'block', width: '100%' }}
+             data-ad-client="ca-pub-7619118541209092"
+             data-ad-slot="1234567890" /* Placeholder slot, AdSense will auto-fill if auto ads are enabled, or the user can specify later */
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
       </div>
+      
       <span style={{ fontSize: '0.75rem', marginTop: '10px', color: 'var(--primary)', cursor: 'pointer' }}>Remover anuncios con Mundial PRO 👑</span>
     </div>
   );
