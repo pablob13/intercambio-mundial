@@ -1151,6 +1151,7 @@ function MainApp({ session, onLogout }) {
 
     const topCompleted = [...teamStats].sort((a, b) => b.progressPercent - a.progressPercent || b.ownedInTeam - a.ownedInTeam);
     const topDuplicates = [...teamStats].filter(t => t.duplicatesInTeam > 0).sort((a, b) => b.duplicatesInTeam - a.duplicatesInTeam);
+    const topMissing = [...teamStats].sort((a, b) => b.faltantesInTeam - a.faltantesInTeam);
 
     return (
     <div className="tab-content fade-in">
@@ -1261,21 +1262,15 @@ function MainApp({ session, onLogout }) {
           </div>
           
           <h4 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>Logros Desbloqueados</h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
+          <div className="vitrina" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '15px' }}>
             {achievements.map(a => (
               <div key={a.id} 
+                className="vitrina-item"
                 onClick={() => setSelectedAchievement(a)}
                 style={{ 
-                backgroundColor: a.condition ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)', 
-                border: `1px solid ${a.condition ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, 
-                borderRadius: '12px', padding: '10px', textAlign: 'center',
                 opacity: a.condition ? 1 : 0.4,
-                filter: a.condition ? 'none' : 'grayscale(100%)',
-                cursor: 'pointer',
-                transition: 'transform 0.2s'
+                filter: a.condition ? 'none' : 'grayscale(100%)'
               }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
               >
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                   <div style={{ position: 'relative', display: 'inline-block', width: '40px', height: '40px' }}>
@@ -1307,6 +1302,24 @@ function MainApp({ session, onLogout }) {
                     <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
                       <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: t.progressPercent === 100 ? 'var(--success)' : 'var(--primary)' }}>{t.progressPercent}%</span>
                       <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{t.ownedInTeam}/{t.totalInTeam}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>📉 Más Faltantes</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {topMissing.slice(0, 5).map((t, idx) => (
+                  <div key={t.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>{t.flag}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: idx === 0 ? 'bold' : 'normal' }}>{t.name}</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#f59e0b' }}>{t.faltantesInTeam}</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>FALTAN</span>
                     </div>
                   </div>
                 ))}

@@ -562,3 +562,34 @@ body {
   100% { transform: translate(-50%, -50%) scale(1); opacity: 0.1; }
 }
 
+
+/* Vitrina para Logros */
+.vitrina {
+  background: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: inset 0 10px 20px rgba(0,0,0,0.3), 0 5px 15px rgba(0,0,0,0.5);
+  position: relative;
+}
+.vitrina::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 16px 16px 0 0;
+}
+.vitrina-item {
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.2) 100%);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 15px 10px;
+  text-align: center;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.02);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+}
+.vitrina-item:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 25px rgba(0,0,0,0.5), inset 0 2px 8px rgba(255,255,255,0.05);
+}
