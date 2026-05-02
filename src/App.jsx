@@ -2256,7 +2256,7 @@ function MainApp({ session, onLogout }) {
                       </div>
                     )}
                     <AdBanner isPro={isPro} format="horizontal" />
-                    <h3 style={{ marginBottom: '15px', color: 'var(--text-muted)' }}>Explorar Comunidad</h3>
+                    <h3 style={{ marginBottom: '15px', color: 'var(--text-muted)' }}>Explorar Comunidad ({otherUsers.length})</h3>
                     {renderUserList(otherUsers)}
                   </div>
                 )}
