@@ -369,14 +369,18 @@ function MainApp({ session, onLogout }) {
   const [scanImageFile, setScanImageFile] = useState(null); // Para recopilar datos de entrenamiento
   
   const [inviteGroup, setInviteGroup] = useState(null);
+  const [showProInvite, setShowProInvite] = useState(false);
 
   useEffect(() => {
     if (!session || !isCloud) return;
     const urlParams = new URLSearchParams(window.location.search);
     const urlGroupId = urlParams.get('joinGroup');
     const storedGroupId = sessionStorage.getItem('pendingJoinGroup');
-    const groupId = urlGroupId || storedGroupId;
-    
+    const storedProInvite = sessionStorage.getItem('pendingProInvite');
+    if (storedProInvite || urlParams.get('invitePro')) {
+      setShowProInvite(true);
+    }
+
     if (groupId) {
       supabase.from('sticker_groups').select('*').eq('id', groupId).single().then(({ data, error }) => {
         if (data && !error) {
@@ -2193,7 +2197,12 @@ function MainApp({ session, onLogout }) {
                     {unreadChats.friends[user.id] && <div style={{ position: 'absolute', top: -2, right: -2, width: '12px', height: '12px', backgroundColor: 'var(--danger)', borderRadius: '50%', border: '2px solid var(--panel-bg)' }} />}
                   </div>
                   {fName}
-                  {isUserPro ? <Crown size={16} color="#FFD700" /> : <span style={{fontSize: '0.7rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 'normal', marginLeft: '5px', textDecoration: 'underline'}} onClick={(e) => { e.stopPropagation(); setPaywallFeature({ title: 'Mundial PRO', description: `¡Dile a ${fName} que se haga PRO para disfrutar de grupos ilimitados y funciones exclusivas!` }); }}>Invitar a PRO</span>}
+                  {isUserPro ? <Crown size={16} color="#FFD700" /> : <span style={{fontSize: '0.7rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 'normal', marginLeft: '5px', textDecoration: 'underline'}} onClick={(e) => { 
+                    e.stopPropagation(); 
+                    const url = `${window.location.origin}/?invitePro=true`;
+                    navigator.clipboard.writeText(`¡Hola ${fName}! Te invito a que seas PRO en Mundial Estampas para que podamos armar grupos de intercambio y completar nuestro álbum más rápido. ¡Checa los beneficios aquí!\n\n${url}`);
+                    alert('¡Enlace de invitación PRO copiado! Mándaselo a tu amigo por WhatsApp.');
+                  }}>Invitar a PRO</span>}
                 </h3>
               </div>
               <div style={{ display: 'flex', gap: '15px', fontSize: '0.85rem' }}>
@@ -2944,6 +2953,37 @@ function MainApp({ session, onLogout }) {
         </div>
       )}
 
+      {showProInvite && (
+        <div className="scanner-modal" style={{ zIndex: 9999 }}>
+          <div className="scanner-content fade-in" style={{ maxWidth: '400px', textAlign: 'center' }}>
+            <h2 style={{ color: 'var(--primary)', margin: '0 0 10px 0' }}>¡Un amigo te invita a ser PRO!</h2>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--text-main)' }}>Desbloquea todo el potencial de tu álbum</h3>
+            <div style={{ textAlign: 'left', marginBottom: '25px', backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <h4 style={{ margin: '0 0 15px 0', color: 'var(--warning)', fontSize: '1.1rem', textAlign: 'center' }}>Beneficios Exclusivos:</h4>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', fontSize: '0.95rem', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <li style={{ display: 'flex', alignItems: 'center' }}><Crown size={18} style={{ marginRight: '10px', color: '#FFD700' }} /> Corona dorada en tu perfil</li>
+                <li style={{ display: 'flex', alignItems: 'center' }}><Users size={18} style={{ marginRight: '10px', color: 'var(--warning)' }} /> Crea y únete a grupos ilimitados</li>
+                <li style={{ display: 'flex', alignItems: 'center' }}><MessageCircle size={18} style={{ marginRight: '10px', color: 'var(--success)' }} /> Chat y solicitudes sin límite</li>
+                <li style={{ display: 'flex', alignItems: 'center' }}><Scan size={18} style={{ marginRight: '10px', color: 'var(--primary)' }} /> Escáner automático con cámara</li>
+              </ul>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="btn btn-secondary" onClick={() => {
+                setShowProInvite(false);
+                sessionStorage.removeItem('pendingProInvite');
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }} style={{ flex: 1, justifyContent: 'center' }}>Luego</button>
+              <button className="btn btn-primary" onClick={() => {
+                setShowProInvite(false);
+                sessionStorage.removeItem('pendingProInvite');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                setPaywallFeature({ title: 'Mundial PRO', description: '¡Aprovecha la invitación de tu amigo y mejora tu cuenta ahora mismo para acceder a todo!' });
+              }} style={{ flex: 1, justifyContent: 'center' }}>¡Quiero ser PRO!</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {scannerMode === 'menu' && (
         <div className="scanner-modal" onClick={() => setScannerMode(null)}>
           <div className="scanner-content fade-in" onClick={e => e.stopPropagation()}>
@@ -3215,6 +3255,11 @@ export default function App() {
     const joinGroup = urlParams.get('joinGroup');
     if (joinGroup) {
       sessionStorage.setItem('pendingJoinGroup', joinGroup);
+    }
+    
+    const invitePro = urlParams.get('invitePro');
+    if (invitePro) {
+      sessionStorage.setItem('pendingProInvite', 'true');
     }
 
     // Revisar si venimos de un enlace de recuperación
