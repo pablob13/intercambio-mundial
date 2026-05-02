@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 
@@ -122,6 +122,10 @@ function LoginScreen({ onLoginLocal }) {
             Entrar de forma local
           </button>
         </form>
+
+        <div style={{ marginTop: '20px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          Al continuar, aceptas nuestros <a href="/terminos.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>Términos y Condiciones</a> y nuestro <a href="/privacidad.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>Aviso de Privacidad</a>.
+        </div>
       </div>
     </div>
   );
@@ -144,6 +148,41 @@ const generateInitialStamps = () => {
   return initial;
 };
 
+const AdBanner = ({ isPro, format = 'horizontal' }) => {
+  if (isPro) return null; // PRO users never see ads
+  
+  return (
+    <div style={{
+      width: '100%',
+      backgroundColor: 'rgba(255,255,255,0.02)',
+      border: '1px dashed var(--border)',
+      borderRadius: '12px',
+      padding: format === 'horizontal' ? '15px' : '30px 15px',
+      margin: '20px 0',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      color: 'var(--text-muted)'
+    }}>
+      <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>Publicidad</span>
+      <div style={{ 
+        width: '100%', 
+        height: format === 'horizontal' ? '60px' : '200px', 
+        backgroundColor: 'rgba(0,0,0,0.2)', 
+        borderRadius: '8px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontSize: '0.9rem'
+      }}>
+        [Espacio Reservado para Google AdSense]
+      </div>
+      <span style={{ fontSize: '0.75rem', marginTop: '10px', color: 'var(--primary)', cursor: 'pointer' }}>Remover anuncios con Mundial PRO 👑</span>
+    </div>
+  );
+};
+
 function MainApp({ session, localUser, onLogout }) {
   const isCloud = !!session;
   const userName = session?.user?.user_metadata?.full_name || session?.user?.email || localUser;
@@ -159,6 +198,7 @@ function MainApp({ session, localUser, onLogout }) {
   const [friendRequests, setFriendRequests] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   
+  const [isPro, setIsPro] = useState(false);
   const [groups, setGroups] = useState([]);
   const [communityTab, setCommunityTab] = useState('explorar');
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -205,24 +245,22 @@ function MainApp({ session, localUser, onLogout }) {
         return state;
       };
 
-      if (isCloud) {
-        const { data, error } = await supabase.from('user_stamps').select('stamps_data').eq('id', session.user.id).single();
-        if (data && data.stamps_data) {
-          if (Array.isArray(data.stamps_data)) {
-            // Migrate old array format to new albums format
-            if (data.stamps_data.length > 0) {
-              setAlbumsState(migrateAlbums({
-                activeAlbumId: 'default',
-                theme: 'dark',
-                showCocaCola: true,
-                friendIds: [],
-                albums: [{ id: 'default', name: 'Mi Álbum Principal', stamps: data.stamps_data }]
-              }));
-            } else {
-              setAlbumsState(createDefaultState());
-            }
+      if (isCloud && session?.user?.id) {
+        const { data, error } = await supabase.from('user_stamps').select('stamps_data, is_pro').eq('id', session.user.id).single();
+        if (data) {
+          setIsPro(!!data.is_pro);
+          const migrated = migrateAlbums(data.stamps_data || {});
+          
+          if (Array.isArray(migrated)) {
+            setAlbumsState(migrateAlbums({
+              activeAlbumId: 'default',
+              theme: 'dark',
+              showCocaCola: true,
+              friendIds: [],
+              albums: [{ id: 'default', name: 'Mi Álbum Principal', stamps: migrated }]
+            }));
           } else {
-            setAlbumsState(migrateAlbums(data.stamps_data));
+            setAlbumsState(migrated);
           }
         } else {
           setAlbumsState(createDefaultState());
@@ -269,7 +307,7 @@ function MainApp({ session, localUser, onLogout }) {
   // Load Friends Data & Requests
   useEffect(() => {
     if (activeTab === 'friends' && isCloud) {
-      supabase.from('user_stamps').select('id, stamps_data').neq('id', session?.user?.id).then(({ data, error }) => {
+      supabase.from('user_stamps').select('id, stamps_data, is_pro').neq('id', session?.user?.id).then(({ data, error }) => {
         if (data && !error) setFriendsData(data);
       });
       
@@ -817,17 +855,43 @@ function MainApp({ session, localUser, onLogout }) {
   const renderProfileTab = () => (
     <div className="tab-content fade-in">
       <div className="profile-card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
-          <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px', fontWeight: 'bold' }}>
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <h2 style={{ margin: '0 0 5px 0' }}>{userName}</h2>
-            <p style={{ margin: 0, color: 'var(--text-muted)' }}>
-              {isCloud ? session?.user?.email : 'Modo Local (Sin Nube)'}
-            </p>
+        <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '24px', fontWeight: 'bold' }}>
+              {userName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {userName}
+                {isPro && <Crown size={20} color="#FFD700" />}
+              </h2>
+              <p style={{ margin: '5px 0 0', color: 'var(--text-muted)' }}>
+                {isCloud ? session?.user?.email : 'Modo Local (Sin Nube)'}
+              </p>
+            </div>
           </div>
         </div>
+
+        {!isPro && isCloud && (
+          <div style={{ backgroundColor: 'rgba(255, 215, 0, 0.1)', border: '1px solid #FFD700', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+              <Crown size={24} color="#FFD700" />
+              <h3 style={{ margin: 0, color: '#FFD700' }}>Mundial PRO</h3>
+            </div>
+            <p style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+              Desbloquea el poder total de tu colección. Obtén:
+            </p>
+            <ul style={{ margin: '0 0 20px 0', paddingLeft: '20px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <li><strong>Creación ilimitada de grupos</strong> (Gana más conexiones)</li>
+              <li><strong>Triangulaciones Avanzadas</strong> (Ahorra tiempo)</li>
+              <li><strong>Libre de anuncios</strong></li>
+              <li><strong>Insignia VIP dorada</strong> en tu perfil</li>
+            </ul>
+            <button className="btn btn-primary" style={{ width: '100%', backgroundColor: '#FFD700', color: 'black', fontWeight: 'bold' }} onClick={() => alert("¡Pronto disponible! Integración de Stripe en proceso.")}>
+              <Star size={18} style={{ marginRight: '8px' }} /> Actualizar a PRO
+            </button>
+          </div>
+        )}
 
         <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
           <h3 style={{ marginTop: 0, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -900,6 +964,14 @@ function MainApp({ session, localUser, onLogout }) {
 
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) return;
+    
+    // PRO Limit Check
+    if (!isPro) {
+      alert("Función Exclusiva PRO 👑\n\nLa creación de grupos es exclusiva para miembros PRO. Ve a tu Perfil para desbloquear esta función y organizar intercambios masivos.");
+      setIsCreatingGroup(false);
+      return;
+    }
+    
     try {
       const { data, error } = await supabase.from('sticker_groups').insert([{ name: newGroupName.trim(), created_by: session.user.id }]).select().single();
       if (error) {
@@ -1367,7 +1439,13 @@ function MainApp({ session, localUser, onLogout }) {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 style={{ margin: 0 }}>Mis Grupos</h2>
-                <button className="btn btn-primary" onClick={() => setIsCreatingGroup(!isCreatingGroup)} style={{ padding: '8px 15px', fontSize: '0.9rem' }}>
+                <button className="btn btn-primary" onClick={() => {
+                  if (!isPro) {
+                    alert("Función Exclusiva PRO 👑\n\nDesbloquea la versión PRO en tu Perfil para poder crear y administrar tus propios grupos.");
+                    return;
+                  }
+                  setIsCreatingGroup(!isCreatingGroup);
+                }} style={{ padding: '8px 15px', fontSize: '0.9rem' }}>
                   {isCreatingGroup ? 'Cancelar' : '+ Nuevo'}
                 </button>
               </div>
@@ -1433,6 +1511,7 @@ function MainApp({ session, localUser, onLogout }) {
                 
                 {otherUsers.length > 0 && (
                   <div>
+                    <AdBanner isPro={isPro} format="horizontal" />
                     <h3 style={{ marginBottom: '15px', color: 'var(--text-muted)' }}>Explorar Comunidad</h3>
                     {renderUserList(otherUsers)}
                   </div>
@@ -1464,6 +1543,8 @@ function MainApp({ session, localUser, onLogout }) {
           <div style={{ width: `${percentage}%`, height: '100%', backgroundColor: '#10b981', transition: 'width 0.5s ease-in-out' }}></div>
         </div>
       </header>
+
+      <AdBanner isPro={isPro} format="horizontal" />
 
       <div className="stats-container">
         <div 
