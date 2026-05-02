@@ -1212,6 +1212,22 @@ function MainApp({ session, onLogout }) {
               <p style={{ margin: '5px 0 0', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {isCloud ? session?.user?.email : 'Modo Local (Sin Nube)'}
               </p>
+              {isPro && isCloud && (
+                <button 
+                  style={{ marginTop: '10px', fontSize: '0.8rem', padding: '5px 10px', backgroundColor: 'transparent', border: '1px solid var(--border)', color: 'var(--text-muted)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  onClick={() => {
+                    // TODO: Pablo, pega tu enlace del Customer Portal de Stripe aquí adentro de las comillas
+                    const stripePortalLink = ""; 
+                    if (stripePortalLink) {
+                      window.open(stripePortalLink, '_blank');
+                    } else {
+                      alert("⚠️ Configuración pendiente: Aún no has pegado el enlace del 'Customer Portal' de Stripe en el código.\n\nPara conseguirlo:\n1. Entra a tu Dashboard de Stripe.\n2. Busca 'Customer portal' en el buscador o en Settings.\n3. Actívalo y copia el link que te dan.\n4. Pégalo en la variable stripePortalLink en App.jsx.");
+                    }
+                  }}
+                >
+                  Administrar Suscripción
+                </button>
+              )}
             </div>
           </div>
         </div>
