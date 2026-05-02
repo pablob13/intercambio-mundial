@@ -605,8 +605,8 @@ function MainApp({ session, onLogout }) {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [tradeGiven, setTradeGiven] = useState([]); 
   const [tradeReceived, setTradeReceived] = useState([]);
-  const [tradeGivenSearch, setTradeGivenSearch] = useState('');
-  const [tradeReceivedSearch, setTradeReceivedSearch] = useState('');
+  const [tradeGivenTeam, setTradeGivenTeam] = useState('');
+  const [tradeReceivedTeam, setTradeReceivedTeam] = useState('');
 
   // New Album Modal State
   const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
@@ -2485,14 +2485,30 @@ function MainApp({ session, onLogout }) {
                   ))}
                   {tradeGiven.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Ninguna seleccionada</span>}
                 </div>
-                <input type="text" className="search-input" placeholder="Buscar repetida (ej. ARG 2)..." value={tradeGivenSearch} onChange={(e) => setTradeGivenSearch(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', marginBottom: '10px' }} />
-                {tradeGivenSearch && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', maxHeight: '100px', overflowY: 'auto' }}>
-                    {stamps.filter(s => s.count > 1 && s.id.toLowerCase().includes(tradeGivenSearch.toLowerCase())).map(s => (
-                      <button key={s.id} onClick={() => { addToTradeGiven(s); setTradeGivenSearch(''); }} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>
-                        + {s.id} (Tienes {s.count - 1 - tradeGiven.filter(tg => tg.id === s.id).length})
-                      </button>
-                    ))}
+                <select className="search-input" value={tradeGivenTeam} onChange={(e) => setTradeGivenTeam(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', marginBottom: '10px', backgroundColor: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px' }}>
+                  <option value="">Selecciona un país...</option>
+                  {TEAMS.map(t => (
+                    <option key={t.code} value={t.code}>{t.flag} {t.name}</option>
+                  ))}
+                </select>
+                
+                {tradeGivenTeam && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', maxHeight: '150px', overflowY: 'auto', paddingRight: '5px' }}>
+                    {stamps.filter(s => s.count > 1 && s.teamCode === tradeGivenTeam).map(s => {
+                      const maxAvailable = s.count - 1;
+                      const currentlySelected = tradeGiven.filter(tg => tg.id === s.id).length;
+                      const canAdd = currentlySelected < maxAvailable;
+                      
+                      return (
+                        <button key={s.id} onClick={() => { if (canAdd) addToTradeGiven(s); }} disabled={!canAdd} style={{ background: canAdd ? 'var(--primary)' : 'var(--panel-bg)', color: canAdd ? 'white' : 'var(--text-muted)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: '8px', cursor: canAdd ? 'pointer' : 'not-allowed', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '50px' }}>
+                          <span style={{ fontWeight: 'bold' }}>{s.number}</span>
+                          <span style={{ fontSize: '0.7rem' }}>Disp: {maxAvailable - currentlySelected}</span>
+                        </button>
+                      );
+                    })}
+                    {stamps.filter(s => s.count > 1 && s.teamCode === tradeGivenTeam).length === 0 && (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No tienes repetidas de este país.</span>
+                    )}
                   </div>
                 )}
               </div>
@@ -2506,12 +2522,28 @@ function MainApp({ session, onLogout }) {
                   ))}
                   {tradeReceived.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Ninguna seleccionada</span>}
                 </div>
-                <input type="text" className="search-input" placeholder="Buscar faltante (ej. BRA 10)..." value={tradeReceivedSearch} onChange={(e) => setTradeReceivedSearch(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', marginBottom: '10px' }} />
-                {tradeReceivedSearch && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', maxHeight: '100px', overflowY: 'auto' }}>
-                    {stamps.filter(s => s.count === 0 && s.id.toLowerCase().includes(tradeReceivedSearch.toLowerCase())).map(s => (
-                      <button key={s.id} onClick={() => { addToTradeReceived(s); setTradeReceivedSearch(''); }} style={{ background: 'var(--success)', color: 'white', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>+ {s.id}</button>
-                    ))}
+                <select className="search-input" value={tradeReceivedTeam} onChange={(e) => setTradeReceivedTeam(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', marginBottom: '10px', backgroundColor: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px' }}>
+                  <option value="">Selecciona un país...</option>
+                  {TEAMS.map(t => (
+                    <option key={t.code} value={t.code}>{t.flag} {t.name}</option>
+                  ))}
+                </select>
+
+                {tradeReceivedTeam && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', maxHeight: '150px', overflowY: 'auto', paddingRight: '5px' }}>
+                    {stamps.filter(s => s.count === 0 && s.teamCode === tradeReceivedTeam).map(s => {
+                      const currentlySelected = tradeReceived.filter(tr => tr.id === s.id).length;
+                      const canAdd = currentlySelected === 0;
+                      
+                      return (
+                        <button key={s.id} onClick={() => { if (canAdd) addToTradeReceived(s); }} disabled={!canAdd} style={{ background: canAdd ? 'var(--success)' : 'var(--panel-bg)', color: canAdd ? 'white' : 'var(--text-muted)', border: '1px solid var(--border)', padding: '6px 12px', borderRadius: '8px', cursor: canAdd ? 'pointer' : 'not-allowed', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '50px' }}>
+                          <span style={{ fontWeight: 'bold' }}>{s.number}</span>
+                        </button>
+                      );
+                    })}
+                    {stamps.filter(s => s.count === 0 && s.teamCode === tradeReceivedTeam).length === 0 && (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No te faltan estampas de este país.</span>
+                    )}
                   </div>
                 )}
               </div>
