@@ -233,8 +233,8 @@ const AdBanner = ({ isPro, format = 'horizontal' }) => {
   if (isPro) return null; // PRO users never see ads
   
   const ads = [
-    { src: '/ad1.jpg', link: 'https://trezam.com.mx' },
-    { src: '/ad2.jpg', link: 'https://trezam.com.mx' }
+    { src: '/ad1.jpg', link: 'https://wa.me/525552115389?text=Me%20gustaria%20tener%20informaci%C3%B3n' },
+    { src: '/ad2.jpg', link: 'https://wa.me/525552115389?text=Me%20gustaria%20tener%20informaci%C3%B3n' }
   ];
 
   return (
