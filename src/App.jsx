@@ -353,7 +353,11 @@ function MainApp({ session, onLogout }) {
       if (isCloud && session?.user?.id) {
         const { data, error } = await supabase.from('user_stamps').select('stamps_data, is_pro').eq('id', session.user.id).single();
         if (data) {
-          setIsPro(!!data.is_pro || PRO_EMAILS.includes(session?.user?.email?.toLowerCase()));
+          const emailIsPro = PRO_EMAILS.includes(session?.user?.email?.toLowerCase());
+          setIsPro(!!data.is_pro || emailIsPro);
+          if (emailIsPro && !data.is_pro) {
+             supabase.from('user_stamps').update({ is_pro: true }).eq('id', session.user.id).then();
+          }
           const migrated = migrateAlbums(data.stamps_data || {});
           
           if (Array.isArray(migrated)) {
@@ -2045,7 +2049,7 @@ function MainApp({ session, onLogout }) {
                     {unreadChats.friends[user.id] && <div style={{ position: 'absolute', top: -2, right: -2, width: '12px', height: '12px', backgroundColor: 'var(--danger)', borderRadius: '50%', border: '2px solid var(--panel-bg)' }} />}
                   </div>
                   {fName}
-                  {user.is_pro && <Crown size={16} color="#FFD700" />}
+                  {user.is_pro ? <Crown size={16} color="#FFD700" /> : <span style={{fontSize: '0.7rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 'normal', marginLeft: '5px', textDecoration: 'underline'}} onClick={(e) => { e.stopPropagation(); setPaywallFeature({ title: 'Mundial PRO', description: `¡Dile a ${fName} que se haga PRO para disfrutar de grupos ilimitados y funciones exclusivas!` }); }}>Invitar a PRO</span>}
                 </h3>
               </div>
               <div style={{ display: 'flex', gap: '15px', fontSize: '0.85rem' }}>
