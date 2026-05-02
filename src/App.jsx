@@ -1992,14 +1992,14 @@ function MainApp({ session, onLogout }) {
                       const myReceiveList = amISender ? tradeData.receive : tradeData.give;
 
                       const handleAcceptTrade = async () => {
-                        const { data: users, error: fetchErr } = await supabase.from('user_stamps').select('*').in('user_id', [msg.sender_id, msg.receiver_id]);
+                        const { data: users, error: fetchErr } = await supabase.from('user_stamps').select('*').in('id', [msg.sender_id, msg.receiver_id]);
                         if (fetchErr || !users || users.length !== 2) {
                           alert("Error al contactar servidor.");
                           return;
                         }
                         
-                        const senderRow = users.find(u => u.user_id === msg.sender_id);
-                        const receiverRow = users.find(u => u.user_id === msg.receiver_id);
+                        const senderRow = users.find(u => u.id === msg.sender_id);
+                        const receiverRow = users.find(u => u.id === msg.receiver_id);
                         
                         const processAlbum = (row, isSenderUser) => {
                           const newStampsData = JSON.parse(JSON.stringify(row.stamps_data));
