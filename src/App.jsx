@@ -2911,12 +2911,18 @@ function MainApp({ session, onLogout }) {
               </ul>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn className=secondary" onClick={() => {
+              <button className="btn btn-secondary" onClick={() => {
                 setInviteGroup(null);
                 sessionStorage.removeItem('pendingJoinGroup');
                 window.history.replaceState({}, document.title, window.location.pathname);
               }} style={{ flex: 1, justifyContent: 'center' }}>Ahora no</button>
               <button className="btn btn-primary" onClick={async () => {
+                if (!isPro) {
+                  setPaywallFeature({ title: 'Grupos de Intercambio', description: 'Únete a grupos exclusivos, haz intercambios masivos y completa tu álbum más rápido con la suscripción PRO.' });
+                  setInviteGroup(null);
+                  return;
+                }
+
                 const { error } = await supabase.from('group_members').insert({ group_id: inviteGroup.id, user_id: session.user.id });
                 if (!error) {
                   alert('¡Te has unido al grupo!');
