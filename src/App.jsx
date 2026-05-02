@@ -260,6 +260,8 @@ const ProPaywall = ({ featureName, description, onUpgrade }) => (
   </div>
 );
 
+const PRO_EMAILS = ['diegoortizdem@gmail.com', 'pablobesoytrigueros@gmail.com'];
+
 function MainApp({ session, onLogout }) {
   const isCloud = true;
   const storageKey = `paniniStamps2026_v4_${session?.user?.id}`;
@@ -297,7 +299,7 @@ function MainApp({ session, onLogout }) {
   const [tradeGiveSelection, setTradeGiveSelection] = useState([]);
   const [tradeReceiveSelection, setTradeReceiveSelection] = useState([]);
   
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(PRO_EMAILS.includes(session?.user?.email?.toLowerCase()));
   const [paywallFeature, setPaywallFeature] = useState(null);
   const [groups, setGroups] = useState([]);
   const [communityTab, setCommunityTab] = useState('explorar');
@@ -351,7 +353,7 @@ function MainApp({ session, onLogout }) {
       if (isCloud && session?.user?.id) {
         const { data, error } = await supabase.from('user_stamps').select('stamps_data, is_pro').eq('id', session.user.id).single();
         if (data) {
-          setIsPro(!!data.is_pro);
+          setIsPro(!!data.is_pro || PRO_EMAILS.includes(session?.user?.email?.toLowerCase()));
           const migrated = migrateAlbums(data.stamps_data || {});
           
           if (Array.isArray(migrated)) {
