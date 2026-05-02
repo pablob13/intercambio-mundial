@@ -346,6 +346,7 @@ function MainApp({ session, onLogout }) {
   const [paywallFeature, setPaywallFeature] = useState(null);
   const [groups, setGroups] = useState([]);
   const [communityTab, setCommunityTab] = useState('explorar');
+  const [communitySearchQuery, setCommunitySearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [groupSubTab, setGroupSubTab] = useState('match'); // 'match', 'chat'
   const [groupMessages, setGroupMessages] = useState([]);
@@ -2097,11 +2098,15 @@ function MainApp({ session, onLogout }) {
 
     const confirmedFriendIds = friendRequests.filter(r => r.status === 'accepted').map(r => r.sender_id === session.user.id ? r.receiver_id : r.sender_id);
     const pendingReceivedIds = friendRequests.filter(r => r.status === 'pending' && r.receiver_id === session.user.id).map(r => r.sender_id);
-    
-    const pendingRequestsUsers = friendsData?.filter(u => pendingReceivedIds.includes(u.id)) || [];
-    const myFriends = friendsData?.filter(u => confirmedFriendIds.includes(u.id)) || [];
-    const otherUsers = friendsData?.filter(u => !confirmedFriendIds.includes(u.id) && !pendingReceivedIds.includes(u.id)) || [];
+    const filteredFriendsData = friendsData?.filter(u => {
+      if (!communitySearchQuery) return true;
+      const fName = u.stamps_data?.ownerName || 'Usuario Anónimo';
+      return fName.toLowerCase().includes(communitySearchQuery.toLowerCase());
+    }) || [];
 
+    const pendingRequestsUsers = filteredFriendsData.filter(u => pendingReceivedIds.includes(u.id));
+    const myFriends = filteredFriendsData.filter(u => confirmedFriendIds.includes(u.id));
+    const otherUsers = filteredFriendsData.filter(u => !confirmedFriendIds.includes(u.id) && !pendingReceivedIds.includes(u.id));
     const renderUserList = (list) => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         {list.map(user => {
@@ -2257,6 +2262,21 @@ function MainApp({ session, onLogout }) {
               <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px' }}>Todavía no hay otros usuarios en la plataforma.</p>
             ) : (
               <>
+                <div style={{ marginBottom: '20px', position: 'relative' }}>
+                  <Search size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Buscar coleccionistas por nombre..."
+                    value={communitySearchQuery}
+                    onChange={(e) => setCommunitySearchQuery(e.target.value)}
+                    style={{ paddingLeft: '45px', width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+                
+                {filteredFriendsData.length === 0 && communitySearchQuery && (
+                  <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron usuarios con ese nombre.</p>
+                )}
                 {pendingRequestsUsers.length > 0 && (
                   <div style={{ marginBottom: '30px' }}>
                     <h3 style={{ marginBottom: '15px', color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '8px' }}>
