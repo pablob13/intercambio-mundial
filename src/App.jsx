@@ -612,6 +612,7 @@ function MainApp({ session, onLogout }) {
   const [isCreateAlbumModalOpen, setIsCreateAlbumModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [newAlbumName, setNewAlbumName] = useState('');
+  const [selectedAchievement, setSelectedAchievement] = useState(null);
 
   useEffect(() => {
     if (Object.keys(expandedTeams).length === 0) {
@@ -1128,12 +1129,12 @@ function MainApp({ session, onLogout }) {
     const estimatedCost = packsOpened * 25; // 25 MXN por sobre
 
     const achievements = [
-      { id: 'first_blood', title: 'Primera Estampa', icon: '🎯', condition: ownedStampsCount > 0, desc: 'Pegaste tu primera estampa.' },
-      { id: 'first_team', title: 'Conquistador', icon: '🌍', condition: TEAMS.some(t => { const teamStamps = stamps.filter(s => s.teamCode === t.code); return teamStamps.length > 0 && teamStamps.every(s => s.count > 0); }), desc: 'Completaste tu primer país.' },
-      { id: 'collector', title: 'Coleccionista', icon: '📦', condition: ownedStampsCount >= 100, desc: 'Llegaste a 100 estampas pegadas.' },
-      { id: 'trader', title: 'Negociador', icon: '🤝', condition: tradeGiven.length > 0 || tradeReceived.length > 0, desc: 'Comenzaste a planear intercambios.' },
-      { id: 'social', title: 'Amigable', icon: '🗣️', condition: (friendsData?.length || 0) >= 3, desc: 'Tienes 3 o más amigos en la comunidad.' },
-      { id: 'pro', title: 'Miembro PRO', icon: '👑', condition: isPro, desc: 'Te uniste al club exclusivo PRO.' }
+      { id: 'first_blood', title: 'Primera Estampa', icon: '🎯', condition: ownedStampsCount > 0, desc: 'Pegaste tu primera estampa.', progressText: `${Math.min(ownedStampsCount, 1)} / 1` },
+      { id: 'first_team', title: 'Conquistador', icon: '🌍', condition: TEAMS.some(t => { const teamStamps = stamps.filter(s => s.teamCode === t.code); return teamStamps.length > 0 && teamStamps.every(s => s.count > 0); }), desc: 'Completaste tu primer país.', progressText: `${TEAMS.filter(t => { const teamStamps = stamps.filter(s => s.teamCode === t.code); return teamStamps.length > 0 && teamStamps.every(s => s.count > 0); }).length > 0 ? '1' : '0'} / 1` },
+      { id: 'collector', title: 'Coleccionista', icon: '📦', condition: ownedStampsCount >= 100, desc: 'Llegaste a 100 estampas pegadas.', progressText: `${Math.min(ownedStampsCount, 100)} / 100` },
+      { id: 'trader', title: 'Negociador', icon: '🤝', condition: tradeGiven.length > 0 || tradeReceived.length > 0, desc: 'Comenzaste a planear intercambios.', progressText: `${(tradeGiven.length > 0 || tradeReceived.length > 0) ? '1' : '0'} / 1` },
+      { id: 'social', title: 'Amigable', icon: '🗣️', condition: (friendsData?.length || 0) >= 3, desc: 'Tienes 3 o más amigos en la comunidad.', progressText: `${Math.min((friendsData?.length || 0), 3)} / 3` },
+      { id: 'pro', title: 'Miembro PRO', icon: '👑', condition: isPro, desc: 'Te uniste al club exclusivo PRO.', progressText: isPro ? '1 / 1' : '0 / 1' }
     ];
 
     return (
@@ -1229,7 +1230,7 @@ function MainApp({ session, onLogout }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px' }}>
             {achievements.map(a => (
               <div key={a.id} 
-                onClick={() => alert(`${a.icon} ${a.title}\n\n${a.desc}\n\nEstado: ${a.condition ? '✅ ¡Desbloqueado!' : '🔒 Aún bloqueado'}`)}
+                onClick={() => setSelectedAchievement(a)}
                 style={{ 
                 backgroundColor: a.condition ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255,255,255,0.02)', 
                 border: `1px solid ${a.condition ? 'var(--primary)' : 'rgba(255,255,255,0.05)'}`, 
@@ -2589,6 +2590,41 @@ function MainApp({ session, onLogout }) {
                 <Library size={18} /> Copiar Link Directo
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {selectedAchievement && (
+        <div className="scanner-modal" onClick={() => setSelectedAchievement(null)}>
+          <div className="scanner-content fade-in" onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0 }}>Detalle de Logro</h2>
+              <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setSelectedAchievement(null)} />
+            </div>
+            <div style={{ fontSize: '4rem', marginBottom: '10px', filter: selectedAchievement.condition ? 'none' : 'grayscale(100%)', opacity: selectedAchievement.condition ? 1 : 0.5 }}>
+              {selectedAchievement.icon}
+            </div>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.5rem', color: selectedAchievement.condition ? 'var(--primary)' : 'var(--text-main)' }}>
+              {selectedAchievement.title}
+            </h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '20px', fontSize: '1rem' }}>
+              {selectedAchievement.desc}
+            </p>
+            <div style={{ backgroundColor: 'var(--bg-color)', padding: '15px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 'bold' }}>Progreso:</span>
+                <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{selectedAchievement.progressText}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 'bold' }}>Estado:</span>
+                <span style={{ color: selectedAchievement.condition ? 'var(--success)' : 'var(--danger)', fontWeight: 'bold' }}>
+                  {selectedAchievement.condition ? '✅ ¡Desbloqueado!' : '🔒 Bloqueado'}
+                </span>
+              </div>
+            </div>
+            <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setSelectedAchievement(null)}>
+              Continuar
+            </button>
           </div>
         </div>
       )}
