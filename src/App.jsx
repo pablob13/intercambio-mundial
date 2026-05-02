@@ -2025,13 +2025,16 @@ function MainApp({ session, onLogout }) {
                         const newSenderData = processAlbum(senderRow, true);
                         const newReceiverData = processAlbum(receiverRow, false);
 
-                        const { error: upsertErr } = await supabase.from('user_stamps').upsert([
-                          { ...senderRow, stamps_data: newSenderData, updated_at: new Date().toISOString() },
-                          { ...receiverRow, stamps_data: newReceiverData, updated_at: new Date().toISOString() }
-                        ]);
+                        const { error: upsertErr } = await supabase.rpc('execute_trade', {
+                          p_sender_id: msg.sender_id,
+                          p_receiver_id: msg.receiver_id,
+                          p_new_sender_data: newSenderData,
+                          p_new_receiver_data: newReceiverData
+                        });
 
                         if (upsertErr) {
-                          alert("Error de seguridad: Ambos usuarios deben tener la sesión activa o necesitas un servidor.");
+                          alert("Error de seguridad al ejecutar intercambio. Por favor corre el script SQL en Supabase para activar la función execute_trade.");
+                          console.error(upsertErr);
                           return;
                         }
 
