@@ -1140,6 +1140,18 @@ function MainApp({ session, onLogout }) {
       { id: 'pro', title: 'Miembro PRO', icon: Crown, color: '#FFD700', condition: isPro, desc: 'Te uniste al club exclusivo PRO.', progressText: isPro ? '100%' : '0%' }
     ];
 
+    const teamStats = TEAMS.filter(t => t.code !== 'FWC' && t.code !== 'CC').map(t => {
+      const teamStamps = stamps.filter(s => s.teamCode === t.code);
+      const totalInTeam = teamStamps.length;
+      const ownedInTeam = teamStamps.filter(s => s.count > 0).length;
+      const duplicatesInTeam = teamStamps.reduce((acc, s) => acc + (s.count > 1 ? s.count - 1 : 0), 0);
+      const progressPercent = totalInTeam > 0 ? Math.round((ownedInTeam / totalInTeam) * 100) : 0;
+      return { ...t, totalInTeam, ownedInTeam, duplicatesInTeam, progressPercent };
+    });
+
+    const topCompleted = [...teamStats].sort((a, b) => b.progressPercent - a.progressPercent || b.ownedInTeam - a.ownedInTeam);
+    const topDuplicates = [...teamStats].filter(t => t.duplicatesInTeam > 0).sort((a, b) => b.duplicatesInTeam - a.duplicatesInTeam);
+
     return (
     <div className="tab-content fade-in">
       <div className="profile-card">
@@ -1276,6 +1288,50 @@ function MainApp({ session, onLogout }) {
                 <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? 'var(--text-main)' : 'var(--text-muted)' }}>{a.title}</div>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
+          <h3 style={{ marginTop: 0, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Globe size={20} color="#10b981" /> Top Selecciones</h3>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '20px' }}>
+            <div>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>🏅 Mayor Progreso</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {topCompleted.slice(0, 5).map((t, idx) => (
+                  <div key={t.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>{t.flag}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: idx === 0 ? 'bold' : 'normal' }}>{t.name}</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: t.progressPercent === 100 ? 'var(--success)' : 'var(--primary)' }}>{t.progressPercent}%</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>{t.ownedInTeam}/{t.totalInTeam}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>🔁 Más Repetidas</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {topDuplicates.length > 0 ? topDuplicates.slice(0, 5).map((t, idx) => (
+                  <div key={t.code} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>{t.flag}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: idx === 0 ? 'bold' : 'normal' }}>{t.name}</span>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--danger)' }}>{t.duplicatesInTeam}</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>REPES</span>
+                    </div>
+                  </div>
+                )) : (
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>No tienes repetidas aún.</div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
