@@ -105,23 +105,7 @@ function LoginScreen({ onLoginLocal }) {
           Continuar con Google
         </button>
 
-        <div className="divider">
-          <span>o entra de forma local (solo en este dispositivo)</span>
-        </div>
 
-        <form onSubmit={handleSubmit}>
-          <input 
-            type="text" 
-            className="login-input" 
-            placeholder="Tu nombre (Modo Local)" 
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-primary login-btn">
-            Entrar de forma local
-          </button>
-        </form>
 
         <div style={{ marginTop: '20px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           Al continuar, aceptas nuestros <a href="/terminos.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>Términos y Condiciones</a> y nuestro <a href="/privacidad.html" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>Aviso de Privacidad</a>.
