@@ -212,6 +212,8 @@ function MainApp({ session, localUser, onLogout }) {
   const [newGroupMessage, setNewGroupMessage] = useState('');
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [lastReadChats, setLastReadChats] = useState(() => JSON.parse(localStorage.getItem('lastReadChats') || '{}'));
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const groupChatScrollRef = useRef(null);
   const chatScrollRef = useRef(null);
 
@@ -407,6 +409,72 @@ function MainApp({ session, localUser, onLogout }) {
       groupChatScrollRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [groupMessages]);
+
+  // Handle local storage for last read chats
+  useEffect(() => {
+    localStorage.setItem('lastReadChats', JSON.stringify(lastReadChats));
+  }, [lastReadChats]);
+
+  // Update last read when in chat tab
+  useEffect(() => {
+    if (selectedFriend && friendSubTab === 'chat') {
+      setLastReadChats(prev => ({ ...prev, [selectedFriend.id]: new Date().getTime() }));
+    }
+  }, [selectedFriend, friendSubTab, messages]);
+
+  useEffect(() => {
+    if (selectedGroup && groupSubTab === 'chat') {
+      setLastReadChats(prev => ({ ...prev, [selectedGroup.id]: new Date().getTime() }));
+    }
+  }, [selectedGroup, groupSubTab, groupMessages]);
+
+  // Check for unread messages globally
+  useEffect(() => {
+    if (!isCloud || !session) return;
+    const checkUnread = async () => {
+      let unread = 0;
+      
+      const { data: msgs } = await supabase.from('messages').select('sender_id, created_at').eq('receiver_id', session.user.id);
+      if (msgs) {
+        const latestBySender = {};
+        msgs.forEach(m => {
+          const time = new Date(m.created_at).getTime();
+          if (!latestBySender[m.sender_id] || time > latestBySender[m.sender_id]) {
+            latestBySender[m.sender_id] = time;
+          }
+        });
+        
+        Object.entries(latestBySender).forEach(([senderId, time]) => {
+          const lastRead = lastReadChats[senderId] || 0;
+          if (time > lastRead) unread++;
+        });
+      }
+
+      const myGroupIds = groups.filter(g => g.group_members?.some(m => m.user_id === session.user.id && m.status === 'accepted')).map(g => g.id);
+      if (myGroupIds.length > 0) {
+        const { data: gMsgs } = await supabase.from('group_messages').select('group_id, created_at').in('group_id', myGroupIds).neq('sender_id', session.user.id);
+        if (gMsgs) {
+          const latestByGroup = {};
+          gMsgs.forEach(m => {
+             const time = new Date(m.created_at).getTime();
+             if (!latestByGroup[m.group_id] || time > latestByGroup[m.group_id]) {
+                latestByGroup[m.group_id] = time;
+             }
+          });
+          Object.entries(latestByGroup).forEach(([groupId, time]) => {
+            const lastRead = lastReadChats[groupId] || 0;
+            if (time > lastRead) unread++;
+          });
+        }
+      }
+      
+      setUnreadChatCount(unread);
+    };
+    
+    checkUnread();
+    const interval = setInterval(checkUnread, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, [isCloud, session, groups, lastReadChats]);
 
   const activeTeams = (albumsState?.showCocaCola !== false) ? TEAMS : TEAMS.filter(t => t.code !== 'CC');
   const activeTotalStamps = activeTeams.reduce((acc, team) => acc + team.count, 0);
@@ -1789,7 +1857,7 @@ function MainApp({ session, localUser, onLogout }) {
 
   const pendingReceivedCount = friendRequests.filter(r => r.status === 'pending' && r.receiver_id === session?.user?.id).length;
   const myInvitesCount = groups.filter(g => g.group_members?.some(m => m.user_id === session?.user?.id && m.status === 'pending')).length;
-  const totalPending = pendingReceivedCount + myInvitesCount;
+  const totalPending = pendingReceivedCount + myInvitesCount + unreadChatCount;
 
   return (
     <div className={`app-container ${albumsState?.theme === 'mexico' ? 'theme-mexico' : ''}`}>
