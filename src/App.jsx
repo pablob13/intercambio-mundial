@@ -373,7 +373,10 @@ function MainApp({ session, onLogout }) {
   useEffect(() => {
     if (!session || !isCloud) return;
     const urlParams = new URLSearchParams(window.location.search);
-    const groupId = urlParams.get('joinGroup');
+    const urlGroupId = urlParams.get('joinGroup');
+    const storedGroupId = sessionStorage.getItem('pendingJoinGroup');
+    const groupId = urlGroupId || storedGroupId;
+    
     if (groupId) {
       supabase.from('sticker_groups').select('*').eq('id', groupId).single().then(({ data, error }) => {
         if (data && !error) {
@@ -2908,8 +2911,9 @@ function MainApp({ session, onLogout }) {
               </ul>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn btn-secondary" onClick={() => {
+              <button className="btn className=secondary" onClick={() => {
                 setInviteGroup(null);
+                sessionStorage.removeItem('pendingJoinGroup');
                 window.history.replaceState({}, document.title, window.location.pathname);
               }} style={{ flex: 1, justifyContent: 'center' }}>Ahora no</button>
               <button className="btn btn-primary" onClick={async () => {
@@ -2918,12 +2922,14 @@ function MainApp({ session, onLogout }) {
                   alert('¡Te has unido al grupo!');
                   setGroups(prev => [...prev, { ...inviteGroup, group_members: [{user_id: session.user.id}] }]);
                   setInviteGroup(null);
+                  sessionStorage.removeItem('pendingJoinGroup');
                   window.history.replaceState({}, document.title, window.location.pathname);
                   setActiveTab('friends');
                   setCommunityTab('grupos');
                 } else {
                   alert('Error al unirse al grupo o ya eres miembro.');
                   setInviteGroup(null);
+                  sessionStorage.removeItem('pendingJoinGroup');
                   window.history.replaceState({}, document.title, window.location.pathname);
                 }
               }} style={{ flex: 1, justifyContent: 'center' }}>Unirme al Grupo</button>
@@ -3198,6 +3204,13 @@ export default function App() {
   const [updatingPassword, setUpdatingPassword] = useState(false);
 
   useEffect(() => {
+    // Guardar el parametro de joinGroup en sessionStorage para que sobreviva a redirecciones OAuth
+    const urlParams = new URLSearchParams(window.location.search);
+    const joinGroup = urlParams.get('joinGroup');
+    if (joinGroup) {
+      sessionStorage.setItem('pendingJoinGroup', joinGroup);
+    }
+
     // Revisar si venimos de un enlace de recuperación
     if (window.location.hash.includes('type=recovery')) {
       setIsRecoveryMode(true);
