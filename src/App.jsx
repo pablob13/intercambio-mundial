@@ -188,15 +188,13 @@ const generateInitialStamps = () => {
 };
 
 const AdBanner = ({ isPro, format = 'horizontal' }) => {
-  const [adImage, setAdImage] = useState('/ad1.jpg');
-
-  useEffect(() => {
-    // Randomize between the two Trezam ads
-    setAdImage(Math.random() > 0.5 ? '/ad1.jpg' : '/ad2.jpg');
-  }, []);
-
   if (isPro) return null; // PRO users never see ads
   
+  const ads = [
+    { src: '/ad1.jpg', link: 'https://trezam.com.mx' },
+    { src: '/ad2.jpg', link: 'https://trezam.com.mx' }
+  ];
+
   return (
     <div style={{
       width: '100%',
@@ -210,14 +208,35 @@ const AdBanner = ({ isPro, format = 'horizontal' }) => {
       padding: '10px 0',
       borderRadius: '12px'
     }}>
-      <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', color: 'var(--text-muted)' }}>Anuncio Patrocinado</span>
+      <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', color: 'var(--text-muted)' }}>Anuncios Patrocinados (Desliza)</span>
       
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '0 15px' }}>
-        <img 
-          src={adImage} 
-          alt="Trezam Seguros" 
-          style={{ width: '100%', maxWidth: '400px', height: 'auto', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.4)', border: '1px solid var(--border)' }} 
-        />
+      <div className="hide-scrollbar" style={{ 
+        width: '100%', 
+        display: 'flex', 
+        overflowX: 'auto', 
+        scrollSnapType: 'x mandatory', 
+        WebkitOverflowScrolling: 'touch',
+        gap: '15px',
+        padding: '0 15px',
+        scrollBehavior: 'smooth'
+      }}>
+        {ads.map((ad, idx) => (
+          <div key={idx} style={{ 
+            flex: '0 0 85%', 
+            maxWidth: '400px', 
+            scrollSnapAlign: 'center',
+            display: 'flex',
+            justifyContent: 'center'
+          }}>
+            <a href={ad.link} target="_blank" rel="noopener noreferrer" style={{ display: 'block', width: '100%' }}>
+              <img 
+                src={ad.src} 
+                alt="Trezam Seguros" 
+                style={{ width: '100%', height: 'auto', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.4)', border: '1px solid var(--border)' }} 
+              />
+            </a>
+          </div>
+        ))}
       </div>
       
       <span style={{ fontSize: '0.75rem', marginTop: '15px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
