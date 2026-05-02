@@ -1834,7 +1834,7 @@ function MainApp({ session, localUser, onLogout }) {
                 📄 Escanear Página Completa
               </button>
               <div style={{ position: 'relative' }}>
-                <input type="file" accept="image/*" capture="environment" onChange={processScanDuplicates} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, zIndex: 10, cursor: 'pointer' }} />
+                <input type="file" accept="image/*" onChange={processScanDuplicates} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, zIndex: 10, cursor: 'pointer' }} />
                 <button className="btn btn-secondary" style={{ width: '100%', padding: '15px' }}>
                   🎴 Escanear Repetidas Sueltas
                 </button>
@@ -1863,9 +1863,9 @@ function MainApp({ session, localUser, onLogout }) {
             </select>
             
             <div style={{ position: 'relative' }}>
-              <input type="file" accept="image/*" capture="environment" onChange={processScanPage} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, zIndex: 10, cursor: 'pointer' }} />
+              <input type="file" accept="image/*" onChange={processScanPage} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, zIndex: 10, cursor: 'pointer' }} />
               <button className="btn btn-primary" style={{ width: '100%', padding: '15px', justifyContent: 'center' }}>
-                <Camera size={20} /> Abrir Cámara
+                <Camera size={20} /> Cámara o Galería
               </button>
             </div>
           </div>
