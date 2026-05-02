@@ -302,7 +302,7 @@ const ProPaywall = ({ featureName, description, onUpgrade }) => (
   </div>
 );
 
-const PRO_EMAILS = ['diegoortizdem@gmail.com', 'pablobesoytrigueros@gmail.com', 'lubechoy@gmail.com'];
+const PRO_EMAILS = ['diegoortizdem@gmail.com', 'pablobesoytrigueros@gmail.com', 'lubechoy@gmail.com', 'mavelezu@gmail.com'];
 const PRO_NAMES = ['Diego Ortiz', 'Pablo Besoy'];
 
 function MainApp({ session, onLogout }) {
