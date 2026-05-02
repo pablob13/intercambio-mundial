@@ -663,6 +663,36 @@ function MainApp({ session, onLogout }) {
     });
   };
 
+  const copyMissingToClipboard = () => {
+    if (!isPro) {
+      setPaywallFeature({ name: "Exportar Faltantes", description: "Copia automáticamente la lista de todas las estampas que te faltan para enviarla rápidamente a tus amigos o grupos." });
+      return;
+    }
+    
+    const missing = stamps.filter(s => s.count === 0);
+    if (missing.length === 0) {
+      alert("¡Felicidades! Tienes todas las estampas del mundial.");
+      return;
+    }
+    
+    const grouped = {};
+    missing.forEach(s => {
+      if (!grouped[s.teamCode]) grouped[s.teamCode] = [];
+      grouped[s.teamCode].push(`${s.id}`);
+    });
+    
+    let text = `Mis estampas FALTANTES del Mundial 2026 (${userName}):\n\n`;
+    Object.keys(grouped).forEach(teamCode => {
+      text += `${teamCode}: ${grouped[teamCode].join(', ')}\n`;
+    });
+    
+    text += `\n⚽ Para hacer intercambios y ver mis repetidas, únete a la comunidad en mundialestampas.com`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+      alert("¡Lista de faltantes copiada al portapapeles! Ya puedes pegarla en WhatsApp.");
+    });
+  };
+
   const toggleTeam = (teamCode) => {
     setExpandedTeams(prev => ({ ...prev, [teamCode]: !prev[teamCode] }));
   };
@@ -2030,6 +2060,19 @@ function MainApp({ session, onLogout }) {
           <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '15px' }}>Genera una lista de texto con todas tus repetidas lista para enviar por WhatsApp.</p>
           <button className="btn" style={{ backgroundColor: 'var(--warning)', color: '#000', width: '100%', justifyContent: 'center', fontWeight: 'bold' }} onClick={copyDuplicatesToClipboard}>
             Copiar Lista de Repetidas
+          </button>
+        </div>
+      )}
+
+      {filter === 'missing' && (stamps.length - ownedCount) > 0 && (
+        <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--danger)', borderRadius: '12px' }}>
+          <h3 style={{ color: 'var(--danger)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Compartir Faltantes {!isPro && <Crown size={16} color="#FFD700" />}
+          </h3>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '15px' }}>Genera una lista de texto con todas las estampas que te faltan para intercambiar más rápido.</p>
+          <button className="btn" style={{ backgroundColor: isPro ? 'var(--danger)' : '#FFD700', color: isPro ? 'white' : 'black', width: '100%', justifyContent: 'center', fontWeight: 'bold' }} onClick={copyMissingToClipboard}>
+            {!isPro && <Crown size={18} style={{ marginRight: '8px' }} />}
+            {isPro ? 'Copiar Lista de Faltantes' : 'Exportar Faltantes (PRO)'}
           </button>
         </div>
       )}
