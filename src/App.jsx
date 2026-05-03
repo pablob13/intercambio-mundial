@@ -431,6 +431,31 @@ function MainApp({ session, onLogout }) {
 
   // Scanner States
   const [scannerMode, setScannerMode] = useState(null); // 'menu', 'page_setup', 'page_processing', 'page_review', 'duplicates_processing'
+  
+  // Ad and Monetization State
+  const [showAd, setShowAd] = useState(false);
+  const [adCountdown, setAdCountdown] = useState(5);
+  const [currentAd, setCurrentAd] = useState(null);
+  const [tradesToday, setTradesToday] = useState(() => {
+    const data = JSON.parse(localStorage.getItem('tradesData') || '{"date": "", "count": 0}');
+    const today = new Date().toDateString();
+    if (data.date === today) return data.count;
+    return 0;
+  });
+
+  const incrementTrades = () => {
+    setTradesToday(prev => {
+      const newVal = prev + 1;
+      localStorage.setItem('tradesData', JSON.stringify({ date: new Date().toDateString(), count: newVal }));
+      return newVal;
+    });
+  };
+
+  const ADS = [
+    { type: 'pro', title: '¡Acelera tu colección!', desc: 'Con Mundial Estampas PRO puedes contactar usuarios sin límites, hacer triangulaciones inteligentes y borrar este y todos los demás anuncios para siempre.', cta: 'Ver Beneficios PRO', img: 'https://images.unsplash.com/photo-1518605368461-1e1e38ce75ce?auto=format&fit=crop&w=400&q=80' },
+    { type: 'trezam', title: 'Trezam: Tu aliado en comercio', desc: 'Descubre Trezam, la plataforma líder para potenciar tus ventas y llevar el control de tus productos de la forma más profesional.', cta: 'Conocer Trezam', img: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=400&q=80' },
+    { type: 'pro_groups', title: 'Grupos Ilimitados', desc: '¡No te quedes fuera! Siendo PRO puedes crear grupos ilimitados, invitar a todos tus amigos y organizar intercambios masivos fácilmente.', cta: 'Ser PRO Hoy', img: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=400&q=80' }
+  ];
   const [scanTargetTeam, setScanTargetTeam] = useState('FWC');
   const [pageScannerResults, setPageScannerResults] = useState(null);
   const [scanImageFile, setScanImageFile] = useState(null); // Para recopilar datos de entrenamiento
@@ -1164,6 +1189,27 @@ function MainApp({ session, onLogout }) {
     return acc + (s.count > 1 ? s.count - 1 : 0);
   }, 0);
   const percentage = Math.round((totalOwned / activeTotalStamps) * 100);
+
+  useEffect(() => {
+    if (!isPro && percentage > 33) {
+      const interval = setInterval(() => {
+        setCurrentAd(ADS[Math.floor(Math.random() * ADS.length)]);
+        setAdCountdown(5);
+        setShowAd(true);
+      }, 75000); // 75 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isPro, percentage]);
+
+  useEffect(() => {
+    if (showAd && adCountdown > 0) {
+      const timer = setTimeout(() => {
+        setAdCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showAd, adCountdown]);
 
   // Album Management Functions
   const handleCreateNewAlbum = () => {
@@ -2125,6 +2171,13 @@ function MainApp({ session, onLogout }) {
                   style={{ width: '100%', padding: '15px', justifyContent: 'center', marginTop: '20px', fontSize: '1.1rem', opacity: isSendingProposal ? 0.7 : 1, cursor: isSendingProposal ? 'not-allowed' : 'pointer' }}
                   onClick={async () => {
                     if (isSendingProposal) return;
+                    if (!isPro) {
+                      if (tradesToday >= 1) {
+                        setPaywallFeature({ title: 'Propuesta de Intercambio', description: 'Has alcanzado el límite de 1 pacto gratis por día. Hazte PRO para contactar e intercambiar sin límites.' });
+                        return;
+                      }
+                      incrementTrades();
+                    }
                     setIsSendingProposal(true);
                     try {
                       const msgContent = `[TRADE_PROPOSAL] ${JSON.stringify({ give: tradeGiveSelection, receive: tradeReceiveSelection })}`;
@@ -2666,7 +2719,12 @@ function MainApp({ session, onLogout }) {
         
         <button className="btn btn-secondary" style={{ flex: 1, justifyContent: 'center', borderColor: 'var(--warning)', color: 'var(--warning)' }} onClick={() => {
           if (!isPro) {
-            setPaywallFeature({ title: 'Pactar Intercambio', description: 'Registra, organiza y visualiza todas tus negociaciones de estampas en un solo lugar.' });
+            if (tradesToday >= 1) {
+              setPaywallFeature({ title: 'Pactar Intercambio', description: 'Has alcanzado el límite de 1 pacto gratis por día. Hazte PRO para contactar e intercambiar sin límites.' });
+            } else {
+              setIsTradeModalOpen(true);
+              incrementTrades();
+            }
           } else {
             setIsTradeModalOpen(true);
           }
@@ -2885,6 +2943,51 @@ function MainApp({ session, onLogout }) {
         </div>
         );
       })()}
+
+      {showAd && currentAd && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 99999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', color: 'white', animation: 'fadeIn 0.3s ease' }}>
+          <div style={{ position: 'absolute', top: 20, right: 20 }}>
+            {adCountdown > 0 ? (
+              <div style={{ padding: '8px 16px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '20px', fontSize: '0.9rem', color: '#94a3b8' }}>
+                Saltar en {adCountdown}...
+              </div>
+            ) : (
+              <button 
+                onClick={() => setShowAd(false)}
+                style={{ padding: '8px 16px', backgroundColor: 'var(--panel-bg)', borderRadius: '20px', border: '1px solid var(--border)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}
+              >
+                <X size={16} /> Cerrar
+              </button>
+            )}
+          </div>
+          
+          <img src={currentAd.img} alt="Ad" style={{ width: '100%', maxWidth: '350px', height: '200px', objectFit: 'cover', borderRadius: '16px', marginBottom: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
+          
+          <h2 style={{ fontSize: '2rem', marginBottom: '15px', textAlign: 'center', background: 'linear-gradient(to right, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            {currentAd.title}
+          </h2>
+          <p style={{ fontSize: '1.1rem', color: '#cbd5e1', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6', marginBottom: '30px' }}>
+            {currentAd.desc}
+          </p>
+          
+          <button 
+            className="btn"
+            style={{ 
+              padding: '16px 32px', fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '30px', 
+              background: 'linear-gradient(135deg, var(--primary) 0%, #9C27B0 100%)', color: 'white', border: 'none',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.3)', width: '100%', maxWidth: '300px'
+            }}
+            onClick={() => {
+              setShowAd(false);
+              setPaywallFeature({ title: currentAd.type === 'trezam' ? 'Trezam' : 'Mundial Estampas PRO', description: currentAd.desc });
+            }}
+          >
+            {currentAd.cta}
+          </button>
+          
+          <div style={{ marginTop: '30px', fontSize: '0.8rem', color: '#64748b' }}>Anuncio patrocinado</div>
+        </div>
+      )}
 
       {isTradeModalOpen && (
         <div className="scanner-modal" onClick={() => setIsTradeModalOpen(false)}>
