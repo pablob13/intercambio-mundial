@@ -354,7 +354,18 @@ function MainApp({ session, onLogout }) {
         root.style.removeProperty('--header-bg');
         root.style.removeProperty('--header-text');
         root.style.removeProperty('--header-text-muted');
-        root.style.removeProperty('--body-watermark');
+        
+        const team = TEAMS.find(t => t.code === currentThemeCode);
+        if (team && team.flag) {
+          const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="80" opacity="0.4" transform="rotate(-15 50 50)">${team.flag}</text></svg>`;
+          root.style.setProperty('--body-watermark', `url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
+          root.style.setProperty('--watermark-size', '180px');
+          root.style.setProperty('--watermark-repeat', 'repeat');
+          root.style.setProperty('--watermark-opacity', '0.03');
+          root.style.setProperty('--watermark-blend', 'normal');
+        } else {
+          root.style.removeProperty('--body-watermark');
+        }
       }
     }
   }, [albumsState?.theme]);
