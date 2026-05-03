@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
+import html2canvas from 'html2canvas';
 import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
@@ -428,6 +429,8 @@ function MainApp({ session, onLogout }) {
   const [unreadChats, setUnreadChats] = useState({ friends: {}, groups: {} });
   const groupChatScrollRef = useRef(null);
   const chatScrollRef = useRef(null);
+  const storyCardRef = useRef(null);
+  const [isGeneratingStory, setIsGeneratingStory] = useState(false);
 
   // Scanner States
   const [scannerMode, setScannerMode] = useState(null); // 'menu', 'page_setup', 'page_processing', 'page_review', 'duplicates_processing'
@@ -1554,24 +1557,52 @@ function MainApp({ session, onLogout }) {
               width: '100%', marginBottom: '25px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '14px', fontSize: '1rem',
               fontWeight: 'bold', borderRadius: '12px', color: 'white', border: 'none',
               background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
-              boxShadow: '0 4px 15px rgba(220, 39, 67, 0.3)'
+              boxShadow: '0 4px 15px rgba(220, 39, 67, 0.3)',
+              opacity: isGeneratingStory ? 0.7 : 1
             }}
-            onClick={() => {
-              const text = `🔥 Llevo el ${progressPercent}% del álbum completado en Mundial Estampas.\n\nMe faltan ${faltantesTotales} y tengo ${repetidasTotales} repetidas listas para intercambiar.\n\n¡Únete a la comunidad para intercambiar conmigo y terminar tu álbum más rápido! ⚽️🏆`;
-              if (navigator.share) {
-                navigator.share({
-                  title: 'Mi Progreso en Mundial Estampas',
-                  text: text,
-                  url: 'https://mundialestampas.com'
-                }).catch(console.error);
-              } else {
-                navigator.clipboard.writeText(`${text}\n\n👉 https://mundialestampas.com`);
-                alert('¡Texto copiado al portapapeles! Abre Instagram o WhatsApp y pégalo para compartirlo con tus amigos.');
+            disabled={isGeneratingStory}
+            onClick={async () => {
+              if (!storyCardRef.current || isGeneratingStory) return;
+              setIsGeneratingStory(true);
+              
+              try {
+                // Generar imagen con html2canvas
+                const canvas = await html2canvas(storyCardRef.current, { backgroundColor: '#0f172a', scale: 2 });
+                
+                canvas.toBlob(async (blob) => {
+                  if (!blob) throw new Error('Blob is null');
+                  const file = new File([blob], 'mundial-estampas-progreso.png', { type: 'image/png' });
+                  
+                  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                      files: [file],
+                      title: 'Mi Progreso en Mundial Estampas',
+                      text: `🔥 Llevo el ${progressPercent}% del álbum.\n¡Únete para intercambiar conmigo! ⚽️🏆\n👉 mundialestampas.com`
+                    });
+                  } else {
+                    // Fallback: Descargar imagen y copiar texto
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'mundial-estampas-progreso.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    const text = `🔥 Llevo el ${progressPercent}% del álbum completado en Mundial Estampas.\n\nMe faltan ${faltantesTotales} y tengo ${repetidasTotales} repetidas.\n\n¡Únete a la comunidad para intercambiar conmigo!\n👉 https://mundialestampas.com`;
+                    navigator.clipboard.writeText(text);
+                    alert('¡Imagen descargada y texto copiado!\nAbre Instagram, sube la imagen a tus Historias y pega el texto.');
+                  }
+                  setIsGeneratingStory(false);
+                }, 'image/png');
+              } catch (err) {
+                console.error('Error sharing story:', err);
+                setIsGeneratingStory(false);
+                alert('Hubo un error al generar la imagen. Inténtalo de nuevo.');
               }
             }}
           >
             <Share size={20} />
-            Compartir Progreso en IG o WhatsApp
+            {isGeneratingStory ? 'Generando Imagen...' : 'Compartir Historia en IG'}
           </button>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '20px' }}>
@@ -3237,6 +3268,63 @@ function MainApp({ session, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* Hidden Story Card for html2canvas */}
+      <div 
+        ref={storyCardRef}
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          top: '-9999px',
+          width: '540px',
+          height: '960px',
+          backgroundColor: '#0f172a',
+          backgroundImage: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '60px 40px',
+          color: 'white',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          zIndex: -1
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ fontSize: '2.5rem', margin: '0 0 10px 0', background: 'linear-gradient(to right, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Mundial Estampas
+          </h2>
+          <p style={{ fontSize: '1.2rem', color: '#94a3b8', margin: 0 }}>¡Así va mi álbum!</p>
+        </div>
+
+        <div style={{ 
+          width: '300px', height: '300px', borderRadius: '50%',
+          background: `conic-gradient(#3b82f6 ${percentage}%, rgba(255,255,255,0.1) 0)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 0 40px rgba(59, 130, 246, 0.3)'
+        }}>
+          <div style={{ width: '250px', height: '250px', borderRadius: '50%', backgroundColor: '#0f172a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '5rem', fontWeight: 'bold', color: '#3b82f6' }}>{percentage}%</span>
+            <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>COMPLETADO</span>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', width: '100%', padding: '0 20px' }}>
+          <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: '25px', borderRadius: '20px', border: '1px solid rgba(245, 158, 11, 0.3)', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#f59e0b' }}>{missing}</div>
+            <div style={{ fontSize: '1.2rem', color: '#94a3b8' }}>Me faltan</div>
+          </div>
+          <div style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', padding: '25px', borderRadius: '20px', border: '1px solid rgba(139, 92, 246, 0.3)', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#8b5cf6' }}>{duplicatesCount}</div>
+            <div style={{ fontSize: '1.2rem', color: '#94a3b8' }}>Repetidas</div>
+          </div>
+        </div>
+
+        <div style={{ textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.05)', padding: '25px', borderRadius: '20px', width: '100%' }}>
+          <p style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0 0 10px 0' }}>¡Busco con quién intercambiar!</p>
+          <p style={{ fontSize: '1.2rem', color: '#3b82f6', margin: 0 }}>👉 mundialestampas.com</p>
+        </div>
+      </div>
 
       <nav className="bottom-nav">
         <button className={`nav-item ${activeTab === 'collection' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('collection'); setPaywallFeature(null); }}>
