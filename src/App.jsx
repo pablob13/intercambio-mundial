@@ -340,14 +340,21 @@ function MainApp({ session, onLogout }) {
         root.style.setProperty('--header-bg', 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)');
         root.style.removeProperty('--header-text');
         root.style.removeProperty('--header-text-muted');
+        root.style.removeProperty('--body-watermark');
       } else if (currentThemeCode === 'OFICIAL_CLARO') {
-        root.style.setProperty('--header-bg', 'linear-gradient(135deg, #2196F3 0%, #9C27B0 33%, #F44336 66%, #FFC107 100%)');
-        root.style.setProperty('--header-text', '#ffffff');
-        root.style.setProperty('--header-text-muted', 'rgba(255, 255, 255, 0.9)');
+        root.style.setProperty('--header-bg', `linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.95)), url('/logo.png') center/cover no-repeat`);
+        root.style.setProperty('--header-text', '#0a2540');
+        root.style.setProperty('--header-text-muted', '#1e293b');
+        root.style.setProperty('--body-watermark', `url('/logo.png')`);
+        root.style.setProperty('--watermark-size', '150px');
+        root.style.setProperty('--watermark-repeat', 'repeat');
+        root.style.setProperty('--watermark-opacity', '0.04');
+        root.style.setProperty('--watermark-blend', 'multiply');
       } else {
         root.style.removeProperty('--header-bg');
         root.style.removeProperty('--header-text');
         root.style.removeProperty('--header-text-muted');
+        root.style.removeProperty('--body-watermark');
       }
     }
   }, [albumsState?.theme]);

@@ -26,6 +26,22 @@ body {
   background-color: var(--bg-color);
   color: var(--text-main);
   min-height: 100vh;
+  position: relative;
+  z-index: 0;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--body-watermark, none);
+  background-position: center;
+  background-size: var(--watermark-size, cover);
+  background-repeat: var(--watermark-repeat, no-repeat);
+  opacity: var(--watermark-opacity, 0.05);
+  mix-blend-mode: var(--watermark-blend, normal);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .app-container {
