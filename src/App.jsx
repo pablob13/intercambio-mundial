@@ -2219,12 +2219,84 @@ function MainApp({ session, onLogout }) {
 
     return (
       <div className="tab-content fade-in">
-        <div className="filters" style={{ marginBottom: '20px' }}>
+        <div className="filters" style={{ marginBottom: '20px', display: 'flex', gap: '5px' }}>
           <button className={`filter-btn ${communityTab === 'explorar' ? 'active' : ''}`} onClick={() => setCommunityTab('explorar')} style={{ flex: 1 }}>Explorar</button>
-          <button className={`filter-btn ${communityTab === 'grupos' ? 'active' : ''}`} onClick={() => setCommunityTab('grupos')} style={{ flex: 1 }}>Mis Grupos</button>
+          <button className={`filter-btn ${communityTab === 'grupos' ? 'active' : ''}`} onClick={() => setCommunityTab('grupos')} style={{ flex: 1 }}>Grupos</button>
+          <button className={`filter-btn ${communityTab === 'ranking' ? 'active' : ''}`} onClick={() => setCommunityTab('ranking')} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}><Trophy size={16} /> Ranking</button>
         </div>
 
-        {communityTab === 'grupos' ? (() => {
+        {communityTab === 'ranking' ? (() => {
+          const myData = {
+            id: session.user.id,
+            name: userName + ' (Tú)',
+            isMe: true,
+            isPro: isPro,
+            owned: totalOwned,
+            percentage: Math.round((totalOwned / activeTotalStamps) * 100)
+          };
+          
+          const friendsRanking = (friendsData || []).map(u => {
+            const fName = u.stamps_data?.ownerName || 'Usuario Anónimo';
+            const fAlbum = u.stamps_data?.albums?.find(a => a.id === u.stamps_data?.activeAlbumId)?.stamps || [];
+            const fOwned = fAlbum.filter(s => s.count > 0 && activeTeams.some(t => t.code === s.teamCode)).length;
+            const isUserPro = u.is_pro || PRO_NAMES.some(name => fName.toLowerCase().includes(name.toLowerCase()));
+            return {
+              id: u.id,
+              name: fName,
+              isMe: false,
+              isPro: isUserPro,
+              owned: fOwned,
+              percentage: Math.round((fOwned / activeTotalStamps) * 100)
+            };
+          });
+          
+          const leaderboard = [myData, ...friendsRanking].sort((a, b) => b.owned - a.owned);
+
+          return (
+            <div>
+              <div style={{ textAlign: 'center', marginBottom: '25px', backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                <Trophy size={48} color="#FFD700" style={{ marginBottom: '10px' }} />
+                <h2 style={{ margin: '0 0 10px 0', color: 'var(--primary)' }}>Ranking Nacional</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Compite con la comunidad para ver quién completa el álbum primero.</p>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {leaderboard.map((user, index) => {
+                  let badge = null;
+                  if (index === 0) badge = <Crown size={20} color="#FFD700" />;
+                  else if (user.percentage >= 80) badge = <Star size={20} color="#FFD700" />;
+                  else if (user.percentage >= 50) badge = <Star size={20} color="#C0C0C0" />;
+                  
+                  return (
+                    <div key={user.id} className="album-card" style={{ display: 'flex', alignItems: 'center', padding: '15px', ...(user.isMe ? { border: '1px solid var(--primary)', backgroundColor: 'rgba(56, 189, 248, 0.05)' } : {}) }}>
+                      <div style={{ width: '35px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
+                        #{index + 1}
+                      </div>
+                      
+                      <div style={{ flex: 1, marginLeft: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <strong style={{ fontSize: '1.1rem', color: user.isMe ? 'var(--primary)' : 'var(--text-main)' }}>{user.name}</strong>
+                          {user.isPro && <Crown size={14} color="#FFD700" />}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                          <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${user.percentage}%`, height: '100%', backgroundColor: user.percentage >= 80 ? 'var(--success)' : 'var(--primary)' }}></div>
+                          </div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{user.percentage}%</span>
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{user.owned}</span>
+                        <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>{badge}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })() : communityTab === 'grupos' ? (() => {
           const myGroupList = groups.filter(g => g.group_members?.some(m => m.user_id === session.user.id && m.status !== 'pending'));
           const myInvites = groups.filter(g => g.group_members?.some(m => m.user_id === session.user.id && m.status === 'pending'));
 
