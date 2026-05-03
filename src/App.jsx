@@ -127,7 +127,10 @@ function LoginScreen() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Mundial 2026</h1>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <img src="/logo.png" alt="Mundial Estampas" style={{ width: '120px', height: '120px', objectFit: 'contain', borderRadius: '24px', boxShadow: '0 8px 16px rgba(0,0,0,0.2)' }} />
+        </div>
+        <h1 style={{ marginTop: 0 }}>Mundial Estampas</h1>
         <p>Inicia sesión para gestionar tu colección en la nube</p>
         
         <button 
@@ -2532,11 +2535,14 @@ function MainApp({ session, onLogout }) {
     <div className="tab-content fade-in">
       <header className="header" style={{ paddingTop: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-          <div style={{ textAlign: 'left' }}>
-            <p style={{ margin: 0, color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
-              {activeAlbumName} {isCloud && <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--primary)', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px' }}>☁️</span>}
-            </p>
-            <h1 style={{ margin: 0, fontSize: '2rem' }}>Mundial 2026</h1>
+          <div style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <img src="/logo.png" alt="Logo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 4px 8px rgba(0,0,0,0.15)' }} />
+            <div>
+              <p style={{ margin: 0, color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                {activeAlbumName} {isCloud && <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--primary)', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px' }}>☁️</span>}
+              </p>
+              <h1 style={{ margin: 0, fontSize: '1.8rem' }}>Mundial Estampas</h1>
+            </div>
           </div>
         </div>
         
