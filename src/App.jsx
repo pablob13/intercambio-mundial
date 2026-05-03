@@ -351,6 +351,33 @@ function MainApp({ session, onLogout }) {
   
   const [isPro, setIsPro] = useState(PRO_EMAILS.includes(session?.user?.email?.toLowerCase()));
   const [paywallFeature, setPaywallFeature] = useState(null);
+  
+  const PRO_BENEFITS = [
+    { title: "Intercambios Masivos", icon: Users, desc: "Crea grupos ilimitados y completa tu álbum más rápido en comunidad." },
+    { title: "Navegación Limpia", icon: X, desc: "Disfruta de la app 100% libre de anuncios molestos siendo PRO." },
+    { title: "Insignia Dorada", icon: Crown, desc: "Obtén la corona dorada en tu perfil y destaca ante los demás coleccionistas." },
+    { title: "Triangulación Inteligente", icon: RefreshCw, desc: "El algoritmo te conectará más rápido con usuarios que tengan lo que te falta." }
+  ];
+  const [proToast, setProToast] = useState(null);
+
+  useEffect(() => {
+    if (!isPro) {
+      const timer = setTimeout(() => {
+        const randomBenefit = PRO_BENEFITS[Math.floor(Math.random() * PRO_BENEFITS.length)];
+        setProToast(randomBenefit);
+      }, 3000);
+      
+      const hideTimer = setTimeout(() => {
+        setProToast(null);
+      }, 15000);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(hideTimer);
+      };
+    }
+  }, [isPro]);
+
   const [groups, setGroups] = useState([]);
   const [communityTab, setCommunityTab] = useState('explorar');
   const [communitySearchQuery, setCommunitySearchQuery] = useState('');
@@ -3009,6 +3036,34 @@ function MainApp({ session, onLogout }) {
           </>
         )}
       </div>
+
+      {proToast && (
+        <div className="fade-in" style={{
+          position: 'fixed', bottom: '90px', left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 40px)', maxWidth: '400px', zIndex: 100,
+          backgroundColor: 'var(--panel-bg)', border: '2px solid #FFD700', borderRadius: '12px',
+          padding: '15px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', display: 'flex', gap: '15px', alignItems: 'flex-start'
+        }}>
+          <button style={{ position: 'absolute', top: '5px', right: '5px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '5px' }} onClick={() => setProToast(null)}><X size={16} /></button>
+          
+          <div style={{ backgroundColor: 'rgba(255, 215, 0, 0.2)', color: '#FFD700', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+            {React.createElement(proToast.icon, { size: 20 })}
+          </div>
+          <div style={{ flex: 1, paddingRight: '15px' }}>
+            <h4 style={{ margin: '0 0 5px 0', color: '#FFD700', fontSize: '0.95rem' }}>Beneficio PRO: {proToast.title}</h4>
+            <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.4' }}>{proToast.desc}</p>
+            <button 
+              className="btn btn-primary" 
+              style={{ padding: '6px 12px', fontSize: '0.8rem', backgroundColor: '#FFD700', color: 'black', border: 'none', width: '100%', justifyContent: 'center', fontWeight: 'bold' }}
+              onClick={() => {
+                setProToast(null);
+                setPaywallFeature({ title: 'Beneficios PRO', description: 'Desbloquea todas las ventajas exclusivas y completa tu colección sin límites.' });
+              }}
+            >
+              Conocer más
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav className="bottom-nav">
         <button className={`nav-item ${activeTab === 'collection' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('collection'); setPaywallFeature(null); }}>
