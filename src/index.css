@@ -49,10 +49,11 @@ body {
   font-size: 2.5rem;
   margin-bottom: 10px;
   text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  color: var(--header-text, var(--text-main));
 }
 
 .header p {
-  color: var(--text-muted);
+  color: var(--header-text-muted, var(--text-muted));
   font-size: 1.1rem;
 }
 

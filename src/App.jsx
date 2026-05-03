@@ -338,8 +338,16 @@ function MainApp({ session, onLogout }) {
       
       if (currentThemeCode === 'MUNDIAL') {
         root.style.setProperty('--header-bg', 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)');
+        root.style.removeProperty('--header-text');
+        root.style.removeProperty('--header-text-muted');
+      } else if (currentThemeCode === 'OFICIAL_CLARO') {
+        root.style.setProperty('--header-bg', 'linear-gradient(135deg, #2196F3 0%, #9C27B0 33%, #F44336 66%, #FFC107 100%)');
+        root.style.setProperty('--header-text', '#ffffff');
+        root.style.setProperty('--header-text-muted', 'rgba(255, 255, 255, 0.9)');
       } else {
         root.style.removeProperty('--header-bg');
+        root.style.removeProperty('--header-text');
+        root.style.removeProperty('--header-text-muted');
       }
     }
   }, [albumsState?.theme]);
@@ -2573,12 +2581,12 @@ function MainApp({ session, onLogout }) {
       <header className="header" style={{ paddingTop: '10px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
           <div style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <img src="/logo.png" alt="Logo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 4px 8px rgba(0,0,0,0.15)' }} />
+            <img src="/logo.png" alt="Logo" style={{ width: '50px', height: '50px', objectFit: 'contain', borderRadius: '12px', boxShadow: '0 4px 8px rgba(0,0,0,0.15)', backgroundColor: 'white', padding: '2px' }} />
             <div>
-              <p style={{ margin: 0, color: 'var(--primary)', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              <p style={{ margin: 0, color: 'var(--header-text-muted, var(--primary))', fontSize: '0.9rem', fontWeight: 'bold' }}>
                 {activeAlbumName} {isCloud && <span style={{ fontSize: '0.7rem', backgroundColor: 'var(--primary)', color: 'white', padding: '2px 6px', borderRadius: '4px', marginLeft: '5px' }}>☁️</span>}
               </p>
-              <h1 style={{ margin: 0, fontSize: '1.8rem' }}>Mundial Estampas</h1>
+              <h1 style={{ margin: 0, fontSize: '1.8rem', color: 'var(--header-text, var(--text-main))' }}>Mundial Estampas</h1>
             </div>
           </div>
         </div>
