@@ -1317,7 +1317,14 @@ function MainApp({ session, onLogout }) {
                   style={{ marginTop: '10px', fontSize: '0.8rem', padding: '5px 10px', backgroundColor: 'rgba(56, 189, 248, 0.1)', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                   onClick={async () => {
                     if (!("Notification" in window)) {
-                      alert("Tu navegador no soporta notificaciones.");
+                      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+                      
+                      if (isIOS && !isStandalone) {
+                        alert("📱 Para activar notificaciones en iPhone:\n\n1. Toca el botón 'Compartir' (cuadrado con flecha abajo de tu pantalla).\n2. Selecciona 'Agregar a Inicio'.\n3. Abre la app desde tu pantalla de inicio y vuelve a darle a este botón.");
+                      } else {
+                        alert("Tu navegador no soporta notificaciones. Intenta desde Chrome o instala la app en tu pantalla de inicio.");
+                      }
                       return;
                     }
                     const permission = await Notification.requestPermission();
