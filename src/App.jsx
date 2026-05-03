@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -315,6 +315,7 @@ function MainApp({ session, onLogout }) {
 
   const [albumsState, setAlbumsState] = useState(null);
   const prevUnreadCountRef = useRef(0);
+  const [showInstallTutorial, setShowInstallTutorial] = useState(false);
 
   useEffect(() => {
     const currentThemeCode = albumsState?.theme || 'MUNDIAL';
@@ -1393,6 +1394,23 @@ function MainApp({ session, onLogout }) {
             </div>
           </div>
         )}
+
+        {(() => {
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+          if (!isStandalone) {
+            return (
+              <button 
+                className="btn btn-secondary" 
+                style={{ width: '100%', marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px', padding: '12px', fontSize: '1rem' }}
+                onClick={() => setShowInstallTutorial(true)}
+              >
+                <Smartphone size={20} />
+                Instalar App en el Celular
+              </button>
+            );
+          }
+          return null;
+        })()}
 
         <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid var(--border)' }}>
           <h3 style={{ marginTop: 0, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}><Star size={20} color="#3b82f6" /> Mi Progreso y Gastos</h3>
@@ -3089,6 +3107,91 @@ function MainApp({ session, onLogout }) {
                 setPaywallFeature({ title: 'Mundial PRO', description: '¡Aprovecha la invitación de tu amigo y mejora tu cuenta ahora mismo para acceder a todo!' });
               }} style={{ flex: 1, justifyContent: 'center' }}>¡Quiero ser PRO!</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showInstallTutorial && (
+        <div className="scanner-modal" style={{ zIndex: 9999 }} onClick={() => setShowInstallTutorial(false)}>
+          <div className="scanner-content fade-in" style={{ maxWidth: '400px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}><Smartphone size={24} color="var(--primary)" /> Instalar App</h2>
+              <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setShowInstallTutorial(false)} />
+            </div>
+            
+            <p style={{ color: 'var(--text-muted)', marginBottom: '20px' }}>
+              Instala Mundial Estampas en tu celular para tener acceso rápido, notificaciones push reales y pantalla completa. ¡No ocupa casi nada de espacio!
+            </p>
+
+            <div style={{ marginBottom: '25px', backgroundColor: 'var(--panel-bg)', border: '1px solid var(--border)', borderRadius: '12px', padding: '15px' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>🍎 Para usuarios de iPhone (Safari)</h3>
+              
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '15px' }}>
+                <div style={{ width: '32px', height: '32px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  <Share size={18} />
+                </div>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem' }}>1. Toca 'Compartir'</strong>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Es el ícono del cuadrado con la flecha hacia arriba que está en el menú inferior de Safari.</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '15px' }}>
+                <div style={{ width: '32px', height: '32px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  <PlusSquare size={18} />
+                </div>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem' }}>2. Agregar a Inicio</strong>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Desliza las opciones hacia abajo y selecciona "Agregar a Inicio" (Add to Home Screen).</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  <Check size={18} />
+                </div>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem' }}>3. ¡Listo!</strong>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Abre la app desde tu pantalla de inicio.</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--panel-bg)', border: '1px solid var(--border)', borderRadius: '12px', padding: '15px' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>🤖 Para usuarios de Android (Chrome)</h3>
+              
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '15px' }}>
+                <div style={{ width: '32px', height: '32px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  <MoreVertical size={18} />
+                </div>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem' }}>1. Menú de Chrome</strong>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Toca los tres puntitos en la esquina superior derecha del navegador.</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '15px' }}>
+                <div style={{ width: '32px', height: '32px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  <Download size={18} />
+                </div>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem' }}>2. Instalar Aplicación</strong>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Busca la opción "Instalar aplicación" o "Agregar a la pantalla principal".</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ width: '32px', height: '32px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', borderRadius: '8px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}>
+                  <Check size={18} />
+                </div>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem' }}>3. ¡Aceptar e Instalar!</strong>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Confirma la instalación y ábrela desde tu celular.</span>
+                </div>
+              </div>
+            </div>
+
+            <button className="btn btn-primary" style={{ width: '100%', marginTop: '20px', padding: '12px', justifyContent: 'center' }} onClick={() => setShowInstallTutorial(false)}>Entendido</button>
           </div>
         </div>
       )}
