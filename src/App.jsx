@@ -762,6 +762,35 @@ function MainApp({ session, onLogout }) {
 
   // Helpers for current album
   const stamps = albumsState?.albums.find(a => a.id === albumsState.activeAlbumId)?.stamps || [];
+
+  const totalOwned = stamps.filter(s => s.count > 0 && activeTeams.some(t => t.code === s.teamCode)).length;
+  const missing = activeTotalStamps - totalOwned;
+  const duplicatesCount = stamps.reduce((acc, s) => {
+    if (!activeTeams.some(t => t.code === s.teamCode)) return acc;
+    return acc + (s.count > 1 ? s.count - 1 : 0);
+  }, 0);
+  const percentage = Math.round((totalOwned / activeTotalStamps) * 100);
+
+  useEffect(() => {
+    if (!isPro && percentage > 33) {
+      const interval = setInterval(() => {
+        setCurrentAd(ADS[Math.floor(Math.random() * ADS.length)]);
+        setAdCountdown(5);
+        setShowAd(true);
+      }, 75000); // 75 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isPro, percentage]);
+
+  useEffect(() => {
+    if (showAd && adCountdown > 0) {
+      const timer = setTimeout(() => {
+        setAdCountdown(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showAd, adCountdown]);
   const activeAlbumName = albumsState?.albums.find(a => a.id === albumsState.activeAlbumId)?.name || '';
 
   const setStamps = (newStamps) => {
@@ -1182,34 +1211,7 @@ function MainApp({ session, onLogout }) {
 
 
 
-  const totalOwned = stamps.filter(s => s.count > 0 && activeTeams.some(t => t.code === s.teamCode)).length;
-  const missing = activeTotalStamps - totalOwned;
-  const duplicatesCount = stamps.reduce((acc, s) => {
-    if (!activeTeams.some(t => t.code === s.teamCode)) return acc;
-    return acc + (s.count > 1 ? s.count - 1 : 0);
-  }, 0);
-  const percentage = Math.round((totalOwned / activeTotalStamps) * 100);
 
-  useEffect(() => {
-    if (!isPro && percentage > 33) {
-      const interval = setInterval(() => {
-        setCurrentAd(ADS[Math.floor(Math.random() * ADS.length)]);
-        setAdCountdown(5);
-        setShowAd(true);
-      }, 75000); // 75 seconds
-
-      return () => clearInterval(interval);
-    }
-  }, [isPro, percentage]);
-
-  useEffect(() => {
-    if (showAd && adCountdown > 0) {
-      const timer = setTimeout(() => {
-        setAdCountdown(prev => prev - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [showAd, adCountdown]);
 
   // Album Management Functions
   const handleCreateNewAlbum = () => {
