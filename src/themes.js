@@ -1,12 +1,15 @@
 export const TEAM_THEMES = {
   "MUNDIAL": {
-    "bg": "#0f172a",
-    "panel": "#1e293b",
-    "primary": "#3b82f6",
-    "hover": "#2563eb",
-    "warning": "#f59e0b",
-    "danger": "#ef4444",
-    "border": "#334155"
+    "bg": "#f8fafc",
+    "panel": "#ffffff",
+    "primary": "#002D62",
+    "hover": "#001a3b",
+    "warning": "#FFC107",
+    "danger": "#F44336",
+    "success": "#4CAF50",
+    "border": "#e2e8f0",
+    "text": "#0f172a",
+    "muted": "#64748b"
   },
   "MEX": {
     "bg": "#0b1713",

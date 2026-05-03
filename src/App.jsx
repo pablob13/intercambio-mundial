@@ -331,7 +331,10 @@ function MainApp({ session, onLogout }) {
       root.style.setProperty('--primary-hover', currentTheme.hover || currentTheme.primary);
       root.style.setProperty('--warning', currentTheme.warning);
       root.style.setProperty('--danger', currentTheme.danger);
+      if (currentTheme.success) root.style.setProperty('--success', currentTheme.success);
       root.style.setProperty('--border', currentTheme.border);
+      root.style.setProperty('--text-main', currentTheme.text || '#f8fafc');
+      root.style.setProperty('--text-muted', currentTheme.muted || '#94a3b8');
     }
   }, [albumsState?.theme]);
 
