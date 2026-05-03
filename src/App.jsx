@@ -1601,7 +1601,8 @@ function MainApp({ session, onLogout }) {
               onChange={(e) => setAlbumsState(prev => ({ ...prev, theme: e.target.value }))}
               style={{ padding: '10px', borderRadius: '8px', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', border: '1px solid var(--border)', outline: 'none', width: '100%', fontSize: '1rem', cursor: 'pointer' }}
             >
-              <option value="MUNDIAL">🏆 Mundial (Por Defecto)</option>
+              <option value="MUNDIAL">🌙 Mundial (Modo Oscuro)</option>
+              <option value="OFICIAL_CLARO">☀️ Mundial (Modo Claro Oficial)</option>
               {TEAMS.filter(t => t.code !== 'FWC' && t.code !== 'CC').sort((a,b) => a.name.localeCompare(b.name)).map(team => (
                 <option key={team.code} value={team.code}>
                   {team.flag} {team.name}

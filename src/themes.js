@@ -1,4 +1,16 @@
 export const TEAM_THEMES = {
+  "OFICIAL_CLARO": {
+    "bg": "#f8fafc",
+    "panel": "#ffffff",
+    "primary": "#002D62",
+    "hover": "#001a3b",
+    "warning": "#FFC107",
+    "danger": "#F44336",
+    "success": "#4CAF50",
+    "border": "#e2e8f0",
+    "text": "#0f172a",
+    "muted": "#64748b"
+  },
   "MUNDIAL": {
     "bg": "#0f172a",
     "panel": "#1e293b",
