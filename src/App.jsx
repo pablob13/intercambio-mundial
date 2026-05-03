@@ -1465,11 +1465,17 @@ function MainApp({ session, onLogout }) {
           if (!isStandalone) {
             return (
               <button 
-                className="btn btn-secondary" 
-                style={{ width: '100%', marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px', padding: '12px', fontSize: '1rem' }}
+                className="btn" 
+                style={{ 
+                  width: '100%', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', padding: '16px', fontSize: '1.1rem',
+                  fontWeight: 'bold', borderRadius: '12px', color: 'white', border: 'none',
+                  background: 'linear-gradient(135deg, var(--primary) 0%, #9C27B0 100%)',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+                  animation: 'pulse 2s infinite'
+                }}
                 onClick={() => setShowInstallTutorial(true)}
               >
-                <Smartphone size={20} />
+                <Smartphone size={24} />
                 Instalar App en el Celular
               </button>
             );
