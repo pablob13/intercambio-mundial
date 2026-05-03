@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -314,6 +314,7 @@ function MainApp({ session, onLogout }) {
   const [editNameValue, setEditNameValue] = useState(userName);
 
   const [albumsState, setAlbumsState] = useState(null);
+  const prevUnreadCountRef = useRef(0);
 
   useEffect(() => {
     const currentThemeCode = albumsState?.theme || 'MUNDIAL';
@@ -649,6 +650,15 @@ function MainApp({ session, onLogout }) {
       
       setUnreadChatCount(unreadCount);
       setUnreadChats(newUnread);
+
+      // Trigger notification if there are new unread messages
+      if (unreadCount > prevUnreadCountRef.current && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification('¡Tienes mensajes nuevos!', {
+          body: 'Revisa tus chats en Mundial Estampas, alguien quiere intercambiar contigo.',
+          icon: '/icon-192.png'
+        });
+      }
+      prevUnreadCountRef.current = unreadCount;
     };
     
     checkUnread();
@@ -1300,6 +1310,25 @@ function MainApp({ session, onLogout }) {
                   }}
                 >
                   Administrar Suscripción
+                </button>
+              )}
+              {isCloud && (
+                <button 
+                  style={{ marginTop: '10px', fontSize: '0.8rem', padding: '5px 10px', backgroundColor: 'rgba(56, 189, 248, 0.1)', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  onClick={async () => {
+                    if (!("Notification" in window)) {
+                      alert("Tu navegador no soporta notificaciones.");
+                      return;
+                    }
+                    const permission = await Notification.requestPermission();
+                    if (permission === "granted") {
+                      alert("¡Notificaciones activadas con éxito! Te avisaremos cuando recibas mensajes o solicitudes de intercambio, incluso si estás en otra pestaña.");
+                    } else {
+                      alert("Debes permitir las notificaciones en tu navegador para usar esta función.");
+                    }
+                  }}
+                >
+                  <Bell size={14} /> Activar Notificaciones
                 </button>
               )}
             </div>
