@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone, Instagram } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -1547,6 +1547,32 @@ function MainApp({ session, onLogout }) {
               </div>
             </div>
           </div>
+
+          <button 
+            className="btn" 
+            style={{ 
+              width: '100%', marginBottom: '25px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', padding: '14px', fontSize: '1rem',
+              fontWeight: 'bold', borderRadius: '12px', color: 'white', border: 'none',
+              background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)',
+              boxShadow: '0 4px 15px rgba(220, 39, 67, 0.3)'
+            }}
+            onClick={() => {
+              const text = `🔥 Llevo el ${progressPercent}% del álbum completado en Mundial Estampas.\n\nMe faltan ${faltantesTotales} y tengo ${repetidasTotales} repetidas listas para intercambiar.\n\n¡Únete a la comunidad para intercambiar conmigo y terminar tu álbum más rápido! ⚽️🏆`;
+              if (navigator.share) {
+                navigator.share({
+                  title: 'Mi Progreso en Mundial Estampas',
+                  text: text,
+                  url: 'https://mundialestampas.com'
+                }).catch(console.error);
+              } else {
+                navigator.clipboard.writeText(`${text}\n\n👉 https://mundialestampas.com`);
+                alert('¡Texto copiado al portapapeles! Abre Instagram o WhatsApp y pégalo para compartirlo con tus amigos.');
+              }
+            }}
+          >
+            <Instagram size={20} />
+            Compartir Progreso en IG o WhatsApp
+          </button>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', textAlign: 'center', marginBottom: '20px' }}>
             <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '15px 10px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
