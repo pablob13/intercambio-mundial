@@ -1619,10 +1619,13 @@ function MainApp({ session, onLogout }) {
             <div style={{ textAlign: 'center', marginBottom: '25px', backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
               <Users size={48} color="var(--primary)" style={{ marginBottom: '10px' }} />
               <h2 style={{ margin: '0 0 10px 0', color: 'var(--primary)' }}>Ranking de Referidos</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Descubre quiénes son los mayores embajadores de la comunidad.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0 0 15px 0' }}>Descubre quiénes son los mayores embajadores de la comunidad.</p>
+              <div style={{ backgroundColor: 'rgba(255, 215, 0, 0.1)', border: '1px solid rgba(255, 215, 0, 0.3)', padding: '12px', borderRadius: '8px', color: '#FFD700', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <Trophy size={18} /> ¡El primer lugar se lleva un balón oficial del Mundial!
+              </div>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingBottom: '20px' }}>
               {referralLeaderboard.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Cargando ranking...</div>
               ) : (
@@ -1656,6 +1659,32 @@ function MainApp({ session, onLogout }) {
                 })
               )}
             </div>
+
+            {/* Sticky Bottom Bar for Current User */}
+            {(() => {
+              const myRankIndex = referralLeaderboard.findIndex(r => r.id === session?.user?.id);
+              if (myRankIndex === -1) return null;
+              const me = referralLeaderboard[myRankIndex];
+              return (
+                <div style={{ position: 'sticky', bottom: '0px', marginTop: '10px', backgroundColor: 'var(--bg-main)', padding: '15px', borderRadius: '12px', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', boxShadow: '0 -4px 15px rgba(0,0,0,0.5)', zIndex: 50 }}>
+                  <div style={{ width: '35px', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.4rem', textAlign: 'center' }}>
+                    #{myRankIndex + 1}
+                  </div>
+                  <div style={{ flex: 1, marginLeft: '10px' }}>
+                    <strong style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>Tú</strong>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                      Amigos invitados
+                    </div>
+                  </div>
+                  <div style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--primary)' }}>{me.count}</span>
+                    <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>
+                      {myRankIndex === 0 ? <Crown size={20} color="#FFD700" /> : (myRankIndex < 3 ? <Star size={20} color="#FFD700" /> : null)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
