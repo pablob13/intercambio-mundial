@@ -438,6 +438,7 @@ function MainApp({ session, onLogout }) {
   // Ad and Monetization State
   const [showAd, setShowAd] = useState(false);
   const [adCountdown, setAdCountdown] = useState(5);
+  const [milestonePopup, setMilestonePopup] = useState(null);
   const [currentAd, setCurrentAd] = useState(null);
   const [tradesToday, setTradesToday] = useState(() => {
     const data = JSON.parse(localStorage.getItem('tradesData') || '{"date": "", "count": 0}');
@@ -794,6 +795,21 @@ function MainApp({ session, onLogout }) {
       return () => clearTimeout(timer);
     }
   }, [showAd, adCountdown]);
+  useEffect(() => {
+    if (!isPro && albumsState?.activeAlbumId) {
+      const milestones = [75, 80, 85, 90, 95, 100];
+      const storageKey = `milestones_${albumsState.activeAlbumId}`;
+      const shownMilestones = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      
+      const currentMilestone = milestones.slice().reverse().find(m => percentage >= m);
+      if (currentMilestone && !shownMilestones.includes(currentMilestone)) {
+        setMilestonePopup(currentMilestone);
+        shownMilestones.push(currentMilestone);
+        localStorage.setItem(storageKey, JSON.stringify(shownMilestones));
+      }
+    }
+  }, [percentage, isPro, albumsState?.activeAlbumId]);
+
   const activeAlbumName = albumsState?.albums.find(a => a.id === albumsState.activeAlbumId)?.name || '';
 
   const setStamps = (newStamps) => {
@@ -3002,6 +3018,48 @@ function MainApp({ session, onLogout }) {
         </div>
         );
       })()}
+
+      {milestonePopup && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(5px)' }}>
+          <div style={{ backgroundColor: 'var(--panel-bg)', borderRadius: '20px', border: '1px solid #FFD700', padding: '30px', maxWidth: '400px', width: '100%', textAlign: 'center', boxShadow: '0 15px 40px rgba(0,0,0,0.5)' }}>
+            <div style={{ width: '80px', height: '80px', backgroundColor: 'rgba(255,215,0,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+              <Trophy size={40} color="#FFD700" />
+            </div>
+            
+            <h2 style={{ fontSize: '1.8rem', color: '#FFD700', margin: '0 0 10px 0' }}>¡{milestonePopup}% Completado!</h2>
+            <p style={{ fontSize: '1rem', color: 'var(--text-main)', marginBottom: '20px', lineHeight: '1.5' }}>
+              ¡Felicidades! Estás en la recta final. Estas últimas estampas son las más difíciles de conseguir.
+            </p>
+            
+            <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', marginBottom: '25px', textAlign: 'left' }}>
+              <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#cbd5e1' }}><strong>¿Por qué pasarte a PRO ahora?</strong></p>
+              <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                <li style={{ marginBottom: '8px' }}>Propuestas ilimitadas para conseguir las que te faltan.</li>
+                <li style={{ marginBottom: '8px' }}>Cero anuncios que interrumpan tu búsqueda.</li>
+                <li>Grupos masivos para más oportunidades de intercambio.</li>
+              </ul>
+            </div>
+
+            <button 
+              className="btn"
+              style={{ width: '100%', background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: 'black', fontWeight: 'bold', fontSize: '1.1rem', padding: '15px', borderRadius: '12px', border: 'none', marginBottom: '10px' }}
+              onClick={() => {
+                setMilestonePopup(null);
+                setPaywallFeature({ title: 'Beneficios PRO', description: 'Desbloquea todas las ventajas exclusivas y completa tu colección sin límites.' });
+              }}
+            >
+              Ver Beneficios PRO
+            </button>
+            
+            <button 
+              onClick={() => setMilestonePopup(null)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              Quizás más tarde
+            </button>
+          </div>
+        </div>
+      )}
 
       {showAd && currentAd && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 99999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', color: 'white', animation: 'fadeIn 0.3s ease' }}>
