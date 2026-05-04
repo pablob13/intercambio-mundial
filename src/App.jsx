@@ -386,6 +386,7 @@ function MainApp({ session, onLogout }) {
   const [isProcessingTrade, setIsProcessingTrade] = useState({});
   
   const [isPro, setIsPro] = useState(PRO_EMAILS.includes(session?.user?.email?.toLowerCase()));
+  const [proType, setProType] = useState(PRO_EMAILS.includes(session?.user?.email?.toLowerCase()) ? 'permanent' : null);
   const [proTimer, setProTimer] = useState(null);
   const [timeLeftStr, setTimeLeftStr] = useState('');
   const [referralCount, setReferralCount] = useState(0);
@@ -397,6 +398,7 @@ function MainApp({ session, onLogout }) {
       checkInterval = setInterval(() => {
         if (Date.now() > proTimer) {
           setIsPro(false);
+          setProType(null);
           setProTimer(null);
         }
       }, 60000); 
@@ -438,6 +440,7 @@ function MainApp({ session, onLogout }) {
       const dbIsPro = !!userData?.is_pro;
       let userIsPro = dbIsPro || PRO_EMAILS.includes(session.user.email?.toLowerCase());
       let proEndTime = null;
+      let currentProType = userIsPro ? 'permanent' : null;
 
       const { data: myReferrals } = await supabase.from('referrals').select('created_at').eq('referrer_id', session.user.id).order('created_at', { ascending: true });
       const count = myReferrals?.length || 0;
@@ -449,6 +452,7 @@ function MainApp({ session, onLogout }) {
         if (Date.now() < endTime) {
           userIsPro = true;
           proEndTime = endTime;
+          currentProType = 'trial';
         }
       }
 
@@ -459,11 +463,13 @@ function MainApp({ session, onLogout }) {
           if (Date.now() < endTime) {
             userIsPro = true;
             proEndTime = endTime;
+            currentProType = 'trial';
           }
         }
       }
 
       setIsPro(userIsPro);
+      setProType(currentProType);
       setProTimer(proEndTime);
     };
 
@@ -1491,6 +1497,7 @@ function MainApp({ session, onLogout }) {
       name: userName + ' (Tú)',
       isMe: true,
       isPro: isPro,
+      proType: proType,
       owned: totalOwned,
       percentage: Math.round((totalOwned / activeTotalStamps) * 100)
     };
@@ -1557,7 +1564,7 @@ function MainApp({ session, onLogout }) {
                     <div style={{ flex: 1, marginLeft: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <strong style={{ fontSize: '1.1rem', color: user.isMe ? 'var(--primary)' : 'var(--text-main)' }}>{user.name}</strong>
-                        {user.isPro && <Crown size={14} color="#FFD700" />}
+                        {user.isPro && <Crown size={14} color={user.proType === 'trial' ? '#C0C0C0' : '#FFD700'} />}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
                         <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
@@ -1602,7 +1609,7 @@ function MainApp({ session, onLogout }) {
                       <div style={{ flex: 1, marginLeft: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <strong style={{ fontSize: '1.1rem', color: user.isMe ? 'var(--primary)' : 'var(--text-main)' }}>{user.name}</strong>
-                          {user.isPro && <Crown size={14} color="#FFD700" />}
+                          {user.isPro && <Crown size={14} color={user.proType === 'trial' ? '#C0C0C0' : '#FFD700'} />}
                         </div>
                         <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                           Amigos invitados
@@ -1700,7 +1707,7 @@ function MainApp({ session, onLogout }) {
                 <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{userName}</span>
                   <Pen size={16} color="var(--text-muted)" style={{ cursor: 'pointer', flexShrink: 0 }} onClick={() => { setEditNameValue(userName); setIsEditingName(true); }} />
-                  {isPro && <Crown size={20} color="#FFD700" style={{ flexShrink: 0 }} />}
+                  {isPro && <Crown size={20} color={proType === 'trial' ? '#C0C0C0' : '#FFD700'} style={{ flexShrink: 0 }} />}
                 </h2>
               )}
               <p style={{ margin: '5px 0 0', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -3693,8 +3700,8 @@ function MainApp({ session, onLogout }) {
       </div>
 
       {timeLeftStr && (
-        <div style={{ position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'rgba(255, 215, 0, 0.9)', color: 'black', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.3)', backdropFilter: 'blur(5px)' }}>
-          <Crown size={18} />
+        <div style={{ position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'rgba(192, 192, 192, 0.95)', color: 'black', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.3)', backdropFilter: 'blur(5px)', border: '1px solid #A0A0A0' }}>
+          <Crown size={18} color="black" />
           PRO: {timeLeftStr}
         </div>
       )}
