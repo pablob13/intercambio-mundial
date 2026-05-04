@@ -1666,7 +1666,7 @@ function MainApp({ session, onLogout }) {
               if (myRankIndex === -1) return null;
               const me = referralLeaderboard[myRankIndex];
               return (
-                <div style={{ position: 'sticky', bottom: '0px', marginTop: '10px', backgroundColor: 'var(--bg-main)', padding: '15px', borderRadius: '12px', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', boxShadow: '0 -4px 15px rgba(0,0,0,0.5)', zIndex: 50 }}>
+                <div style={{ position: 'sticky', bottom: '0px', marginTop: '10px', backgroundColor: 'var(--panel-bg)', padding: '15px', borderRadius: '12px', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', boxShadow: '0 -4px 15px rgba(0,0,0,0.5)', zIndex: 50 }}>
                   <div style={{ width: '35px', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.4rem', textAlign: 'center' }}>
                     #{myRankIndex + 1}
                   </div>
