@@ -3,6 +3,7 @@ import Tesseract from 'tesseract.js';
 import html2canvas from 'html2canvas';
 import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone, Sun, Moon, Shield } from 'lucide-react';
 import { supabase } from './supabase';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import './index.css';
 
 class ErrorBoundary extends Component {
@@ -336,6 +337,7 @@ const ProPaywall = ({ featureName, description, onUpgrade }) => (
 
 const PRO_EMAILS = ['diegoortizdem@gmail.com', 'pablobesoytrigueros@gmail.com', 'lubechoy@gmail.com', 'mavelezu@gmail.com'];
 const PRO_NAMES = ['Diego Ortiz', 'Pablo Besoy'];
+const SUPER_ADMINS = ['pablobesoy@gmail.com', 'mavelezu@gmail.com'];
 
 function MainApp({ session, onLogout }) {
   const isCloud = true;
@@ -421,16 +423,43 @@ function MainApp({ session, onLogout }) {
   const [referralCount, setReferralCount] = useState(0);
 
   useEffect(() => {
-    if (activeTab === 'admin' && session?.user?.email === 'pablobesoy@gmail.com') {
+    if (activeTab === 'admin' && SUPER_ADMINS.includes(session?.user?.email?.toLowerCase())) {
       const loadAdminStats = async () => {
         try {
-          const [usersRes, proUsersRes, groupsRes, messagesRes, tradesRes] = await Promise.all([
+          const [usersRes, proUsersRes, groupsRes, messagesRes, tradesRes, usersData, refsData, msgsData] = await Promise.all([
             supabase.from('user_stamps').select('id', { count: 'exact', head: true }),
             supabase.from('user_stamps').select('id', { count: 'exact', head: true }).eq('is_pro', true),
             supabase.from('sticker_groups').select('id', { count: 'exact', head: true }),
             supabase.from('group_messages').select('id', { count: 'exact', head: true }),
-            supabase.from('trades').select('id', { count: 'exact', head: true })
+            supabase.from('trades').select('id', { count: 'exact', head: true }),
+            supabase.from('user_stamps').select('created_at'),
+            supabase.from('referrals').select('created_at'),
+            supabase.from('group_messages').select('created_at')
           ]);
+          
+          const processDailyData = (dataArray) => {
+            if (!dataArray) return {};
+            return dataArray.reduce((acc, row) => {
+              if (!row.created_at) return acc;
+              const date = row.created_at.split('T')[0];
+              acc[date] = (acc[date] || 0) + 1;
+              return acc;
+            }, {});
+          };
+
+          const usersDaily = processDailyData(usersData?.data);
+          const refsDaily = processDailyData(refsData?.data);
+          const msgsDaily = processDailyData(msgsData?.data);
+
+          const allDates = new Set([...Object.keys(usersDaily), ...Object.keys(refsDaily), ...Object.keys(msgsDaily)]);
+          const sortedDates = Array.from(allDates).sort();
+
+          const chartData = sortedDates.map(date => ({
+            date,
+            Usuarios: usersDaily[date] || 0,
+            Referidos: refsDaily[date] || 0,
+            Mensajes: msgsDaily[date] || 0
+          }));
           
           setAdminStats({
             totalUsers: usersRes?.count || 0,
@@ -438,10 +467,11 @@ function MainApp({ session, onLogout }) {
             totalGroups: groupsRes?.count || 0,
             totalMessages: messagesRes?.count || 0,
             totalTrades: tradesRes?.count || 0,
+            chartData
           });
         } catch (err) {
           console.error(err);
-          setAdminStats({ totalUsers: 0, proUsers: 0, totalGroups: 0, totalMessages: 0, totalTrades: 0 });
+          setAdminStats({ totalUsers: 0, proUsers: 0, totalGroups: 0, totalMessages: 0, totalTrades: 0, chartData: [] });
         }
       };
       loadAdminStats();
@@ -2253,7 +2283,7 @@ function MainApp({ session, onLogout }) {
           Cerrar Sesión
         </button>
 
-        {session?.user?.email === 'pablobesoy@gmail.com' && (
+        {SUPER_ADMINS.includes(session?.user?.email?.toLowerCase()) && (
           <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '15px' }} onClick={() => setActiveTab('admin')}>
             <Shield size={20} />
             Panel de Administración
@@ -2265,7 +2295,7 @@ function MainApp({ session, onLogout }) {
   };
 
   const renderAdminTab = () => {
-    if (session?.user?.email !== 'pablobesoy@gmail.com') return null;
+    if (!SUPER_ADMINS.includes(session?.user?.email?.toLowerCase())) return null;
 
     return (
       <div className="tab-content fade-in">
@@ -2320,6 +2350,32 @@ function MainApp({ session, onLogout }) {
               </div>
               <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>{adminStats.totalTrades}</span>
             </div>
+
+            {adminStats.chartData && adminStats.chartData.length > 0 && (
+              <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', marginTop: '10px' }}>
+                <h3 style={{ margin: '0 0 20px 0', fontSize: '1.2rem' }}>Actividad por Día</h3>
+                <div style={{ width: '100%', height: 300 }}>
+                  <ResponsiveContainer>
+                    <LineChart data={adminStats.chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                      <XAxis dataKey="date" stroke="var(--text-muted)" fontSize={12} tickFormatter={(tick) => {
+                        const [, m, d] = tick.split('-');
+                        return `${d}/${m}`;
+                      }} />
+                      <YAxis stroke="var(--text-muted)" fontSize={12} />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--panel-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)' }}
+                        itemStyle={{ color: 'var(--text-main)' }}
+                      />
+                      <Legend />
+                      <Line type="monotone" dataKey="Usuarios" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="Referidos" stroke="#FFD700" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                      <Line type="monotone" dataKey="Mensajes" stroke="#00d2ff" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
             
             <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', marginTop: '20px' }} onClick={() => setActiveTab('profile')}>
               Volver al Perfil
