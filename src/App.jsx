@@ -434,7 +434,9 @@ function MainApp({ session, onLogout }) {
         localStorage.removeItem('referral_code');
       }
 
-      let userIsPro = PRO_EMAILS.includes(session.user.email?.toLowerCase());
+      const { data: userData } = await supabase.from('user_stamps').select('is_pro').eq('id', session.user.id).maybeSingle();
+      const dbIsPro = !!userData?.is_pro;
+      let userIsPro = dbIsPro || PRO_EMAILS.includes(session.user.email?.toLowerCase());
       let proEndTime = null;
 
       const { data: myReferrals } = await supabase.from('referrals').select('created_at').eq('referrer_id', session.user.id).order('created_at', { ascending: true });
@@ -615,7 +617,7 @@ function MainApp({ session, onLogout }) {
         const { data, error } = await supabase.from('user_stamps').select('stamps_data, is_pro').eq('id', session.user.id).single();
         if (data) {
           const emailIsPro = PRO_EMAILS.includes(session?.user?.email?.toLowerCase());
-          setIsPro(!!data.is_pro || emailIsPro);
+          setIsPro(prev => prev || !!data.is_pro || emailIsPro);
           if (emailIsPro && !data.is_pro) {
              supabase.from('user_stamps').update({ is_pro: true }).eq('id', session.user.id).then();
           }
