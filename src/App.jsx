@@ -544,7 +544,7 @@ function MainApp({ session, onLogout }) {
   const [groups, setGroups] = useState([]);
   const [communityTab, setCommunityTab] = useState('explorar');
   const [communitySearchQuery, setCommunitySearchQuery] = useState('');
-  const [rankingSubTab, setRankingSubTab] = useState('progreso');
+  const [rankingSubTab, setRankingSubTab] = useState('referidos');
   const [referralRankings, setReferralRankings] = useState([]);
   const [communityShowOnlyPro, setCommunityShowOnlyPro] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
