@@ -1575,7 +1575,7 @@ function MainApp({ session, onLogout }) {
                   
                   return (
                     <div key={user.id} className="album-card" style={{ display: 'flex', alignItems: 'center', padding: '15px', ...(user.isMe ? { border: '1px solid var(--primary)', backgroundColor: 'rgba(56, 189, 248, 0.05)' } : {}) }}>
-                      <div style={{ width: '35px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
+                      <div style={{ minWidth: '45px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
                         #{index + 1}
                       </div>
                       
@@ -1636,7 +1636,7 @@ function MainApp({ session, onLogout }) {
                   
                   return (
                     <div key={user.id} className="album-card" style={{ display: 'flex', alignItems: 'center', padding: '15px', ...(user.isMe ? { border: '1px solid var(--primary)', backgroundColor: 'rgba(56, 189, 248, 0.05)' } : {}) }}>
-                      <div style={{ width: '35px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
+                      <div style={{ minWidth: '45px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
                         #{index + 1}
                       </div>
                       
@@ -1667,7 +1667,7 @@ function MainApp({ session, onLogout }) {
               const me = referralLeaderboard[myRankIndex];
               return (
                 <div style={{ position: 'sticky', bottom: '0px', marginTop: '10px', backgroundColor: 'var(--panel-bg)', padding: '15px', borderRadius: '12px', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', boxShadow: '0 -4px 15px rgba(0,0,0,0.5)', zIndex: 50 }}>
-                  <div style={{ width: '35px', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.4rem', textAlign: 'center' }}>
+                  <div style={{ minWidth: '45px', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.4rem', textAlign: 'center' }}>
                     #{myRankIndex + 1}
                   </div>
                   <div style={{ flex: 1, marginLeft: '10px' }}>
