@@ -423,23 +423,26 @@ function MainApp({ session, onLogout }) {
   useEffect(() => {
     if (activeTab === 'admin' && session?.user?.email === 'pablobesoy@gmail.com') {
       const loadAdminStats = async () => {
-        const [usersRes, proUsersRes, groupsRes, messagesRes, tradesRes] = await Promise.all([
-          supabase.from('user_stamps').select('id', { count: 'exact', head: true }),
-          supabase.from('user_stamps').select('id', { count: 'exact', head: true }).eq('is_pro', true),
-          supabase.from('sticker_groups').select('id', { count: 'exact', head: true }),
-          supabase.from('group_messages').select('id', { count: 'exact', head: true }),
-          supabase.from('trades').select('id', { count: 'exact', head: true }).catch(() => ({ count: 0 }))
-        ]);
-
-        // Fallback for trades if table doesn't exist
-        
-        setAdminStats({
-          totalUsers: usersRes.count || 0,
-          proUsers: proUsersRes.count || 0,
-          totalGroups: groupsRes.count || 0,
-          totalMessages: messagesRes.count || 0,
-          totalTrades: tradesRes?.count || 0,
-        });
+        try {
+          const [usersRes, proUsersRes, groupsRes, messagesRes, tradesRes] = await Promise.all([
+            supabase.from('user_stamps').select('id', { count: 'exact', head: true }),
+            supabase.from('user_stamps').select('id', { count: 'exact', head: true }).eq('is_pro', true),
+            supabase.from('sticker_groups').select('id', { count: 'exact', head: true }),
+            supabase.from('group_messages').select('id', { count: 'exact', head: true }),
+            supabase.from('trades').select('id', { count: 'exact', head: true })
+          ]);
+          
+          setAdminStats({
+            totalUsers: usersRes?.count || 0,
+            proUsers: proUsersRes?.count || 0,
+            totalGroups: groupsRes?.count || 0,
+            totalMessages: messagesRes?.count || 0,
+            totalTrades: tradesRes?.count || 0,
+          });
+        } catch (err) {
+          console.error(err);
+          setAdminStats({ totalUsers: 0, proUsers: 0, totalGroups: 0, totalMessages: 0, totalTrades: 0 });
+        }
       };
       loadAdminStats();
     }
