@@ -1,9 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Component } from 'react';
 import Tesseract from 'tesseract.js';
 import html2canvas from 'html2canvas';
 import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone, Sun, Moon } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '20px', color: 'red', backgroundColor: 'white', minHeight: '100vh', zIndex: 999999, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, overflow: 'auto' }}>
+          <h2>Algo salió mal en la aplicación. (React Crash)</h2>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo && this.state.errorInfo.componentStack}
+          </details>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import { TEAM_THEMES } from './themes';
 
 const TEAMS = [
@@ -4266,9 +4294,17 @@ export default function App() {
   }
 
   if (!session) {
-    return <LoginScreen />;
+    return (
+      <ErrorBoundary>
+        <LoginScreen />
+      </ErrorBoundary>
+    );
   }
 
-  return <MainApp session={session} onLogout={handleLogout} />;
+  return (
+    <ErrorBoundary>
+      <MainApp session={session} onLogout={handleLogout} />
+    </ErrorBoundary>
+  );
 }
 
