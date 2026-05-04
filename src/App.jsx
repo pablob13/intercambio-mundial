@@ -513,6 +513,8 @@ function MainApp({ session, onLogout }) {
   const [groups, setGroups] = useState([]);
   const [communityTab, setCommunityTab] = useState('explorar');
   const [communitySearchQuery, setCommunitySearchQuery] = useState('');
+  const [rankingSubTab, setRankingSubTab] = useState('progreso');
+  const [referralRankings, setReferralRankings] = useState([]);
   const [communityShowOnlyPro, setCommunityShowOnlyPro] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [groupSubTab, setGroupSubTab] = useState('match'); // 'match', 'chat'
@@ -701,6 +703,42 @@ function MainApp({ session, onLogout }) {
       });
     }
   }, [activeTab, isCloud, session]);
+
+  // Load Ranking Data
+  useEffect(() => {
+    if (activeTab === 'ranking' && isCloud) {
+      if (friendsData.length === 0) {
+        supabase.from('user_stamps').select('id, stamps_data, is_pro').neq('id', session?.user?.id).then(({ data, error }) => {
+          if (data && !error) setFriendsData(data);
+        });
+      }
+      
+      supabase.from('referrals').select('referrer_id').then(async ({ data, error }) => {
+        if (data && !error) {
+          const counts = {};
+          data.forEach(r => {
+             counts[r.referrer_id] = (counts[r.referrer_id] || 0) + 1;
+          });
+          const userIds = Object.keys(counts);
+          if (userIds.length > 0) {
+             const { data: usersData } = await supabase.from('user_stamps').select('id, stamps_data, is_pro').in('id', userIds);
+             if (usersData) {
+               const rankings = usersData.map(u => ({
+                 id: u.id,
+                 name: u.stamps_data?.ownerName || 'Usuario Anónimo',
+                 isPro: u.is_pro,
+                 count: counts[u.id],
+                 isMe: u.id === session?.user?.id
+               })).sort((a, b) => b.count - a.count);
+               setReferralRankings(rankings);
+             }
+          } else {
+             setReferralRankings([]);
+          }
+        }
+      });
+    }
+  }, [activeTab, isCloud, friendsData.length, session]);
 
   // Load Messages
   useEffect(() => {
@@ -1443,6 +1481,148 @@ function MainApp({ session, onLogout }) {
       )}
     </div>
   );
+
+  const renderRankingTab = () => {
+    const activeTotalStamps = stamps.length || 1; 
+    const totalOwned = stamps.filter(s => s.count > 0).length;
+
+    const myData = {
+      id: session?.user?.id,
+      name: userName + ' (Tú)',
+      isMe: true,
+      isPro: isPro,
+      owned: totalOwned,
+      percentage: Math.round((totalOwned / activeTotalStamps) * 100)
+    };
+    
+    const friendsRanking = (friendsData || []).map(u => {
+      const fName = u.stamps_data?.ownerName || 'Usuario Anónimo';
+      const fAlbum = u.stamps_data?.albums?.find(a => a.id === u.stamps_data?.activeAlbumId)?.stamps || [];
+      const fOwned = fAlbum.filter(s => s.count > 0).length;
+      const isUserPro = u.is_pro || PRO_EMAILS.includes(u.stamps_data?.ownerEmail?.toLowerCase());
+      return {
+        id: u.id,
+        name: fName,
+        isMe: false,
+        isPro: isUserPro,
+        owned: fOwned,
+        percentage: Math.round((fOwned / activeTotalStamps) * 100)
+      };
+    });
+    
+    const progressLeaderboard = [myData, ...friendsRanking].sort((a, b) => b.owned - a.owned).slice(0, 50);
+
+    const myReferralCount = referralRankings?.find(r => r.id === session?.user?.id)?.count || referralCount;
+    const myReferralData = {
+      id: session?.user?.id,
+      name: userName + ' (Tú)',
+      isMe: true,
+      isPro: isPro,
+      count: myReferralCount
+    };
+    
+    const refsData = referralRankings || [];
+    const referralLeaderboard = refsData.find(r => r.id === session?.user?.id) 
+      ? refsData 
+      : [...refsData, myReferralData].sort((a, b) => b.count - a.count);
+
+    return (
+      <div className="tab-content fade-in">
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', backgroundColor: 'var(--panel-bg)', padding: '5px', borderRadius: '12px' }}>
+          <button className={`filter-btn ${rankingSubTab === 'progreso' ? 'active' : ''}`} onClick={() => setRankingSubTab('progreso')} style={{ flex: 1 }}>Progreso</button>
+          <button className={`filter-btn ${rankingSubTab === 'referidos' ? 'active' : ''}`} onClick={() => setRankingSubTab('referidos')} style={{ flex: 1 }}>Referidos</button>
+        </div>
+
+        {rankingSubTab === 'progreso' ? (
+          <div>
+            <div style={{ textAlign: 'center', marginBottom: '25px', backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <Trophy size={48} color="#FFD700" style={{ marginBottom: '10px' }} />
+              <h2 style={{ margin: '0 0 10px 0', color: 'var(--primary)' }}>Ranking Nacional</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Compite con la comunidad para ver quién completa el álbum primero.</p>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {progressLeaderboard.map((user, index) => {
+                let badge = null;
+                if (index === 0) badge = <Crown size={20} color="#FFD700" />;
+                else if (user.percentage >= 80) badge = <Star size={20} color="#FFD700" />;
+                else if (user.percentage >= 50) badge = <Star size={20} color="#C0C0C0" />;
+                
+                return (
+                  <div key={user.id} className="album-card" style={{ display: 'flex', alignItems: 'center', padding: '15px', ...(user.isMe ? { border: '1px solid var(--primary)', backgroundColor: 'rgba(56, 189, 248, 0.05)' } : {}) }}>
+                    <div style={{ width: '35px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
+                      #{index + 1}
+                    </div>
+                    
+                    <div style={{ flex: 1, marginLeft: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <strong style={{ fontSize: '1.1rem', color: user.isMe ? 'var(--primary)' : 'var(--text-main)' }}>{user.name}</strong>
+                        {user.isPro && <Crown size={14} color="#FFD700" />}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                        <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${user.percentage}%`, height: '100%', backgroundColor: user.percentage >= 80 ? 'var(--success)' : 'var(--primary)' }}></div>
+                        </div>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{user.percentage}%</span>
+                      </div>
+                    </div>
+                    
+                    <div style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{user.owned}</span>
+                      <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>{badge}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ textAlign: 'center', marginBottom: '25px', backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <Users size={48} color="var(--primary)" style={{ marginBottom: '10px' }} />
+              <h2 style={{ margin: '0 0 10px 0', color: 'var(--primary)' }}>Ranking de Referidos</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Descubre quiénes son los mayores embajadores de la comunidad.</p>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {referralLeaderboard.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Cargando ranking...</div>
+              ) : (
+                referralLeaderboard.map((user, index) => {
+                  let badge = null;
+                  if (index === 0) badge = <Crown size={20} color="#FFD700" />;
+                  else if (index < 3) badge = <Star size={20} color="#FFD700" />;
+                  
+                  return (
+                    <div key={user.id} className="album-card" style={{ display: 'flex', alignItems: 'center', padding: '15px', ...(user.isMe ? { border: '1px solid var(--primary)', backgroundColor: 'rgba(56, 189, 248, 0.05)' } : {}) }}>
+                      <div style={{ width: '35px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
+                        #{index + 1}
+                      </div>
+                      
+                      <div style={{ flex: 1, marginLeft: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <strong style={{ fontSize: '1.1rem', color: user.isMe ? 'var(--primary)' : 'var(--text-main)' }}>{user.name}</strong>
+                          {user.isPro && <Crown size={14} color="#FFD700" />}
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          Amigos invitados
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--primary)' }}>{user.count}</span>
+                        <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>{badge}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderProfileTab = () => {
     const totalStampsCount = stamps.reduce((acc, s) => acc + s.count, 0);
@@ -2615,81 +2795,9 @@ function MainApp({ session, onLogout }) {
         <div className="filters" style={{ marginBottom: '20px', display: 'flex', gap: '5px' }}>
           <button className={`filter-btn ${communityTab === 'explorar' ? 'active' : ''}`} onClick={() => setCommunityTab('explorar')} style={{ flex: 1 }}>Explorar</button>
           <button className={`filter-btn ${communityTab === 'grupos' ? 'active' : ''}`} onClick={() => setCommunityTab('grupos')} style={{ flex: 1 }}>Grupos</button>
-          <button className={`filter-btn ${communityTab === 'ranking' ? 'active' : ''}`} onClick={() => setCommunityTab('ranking')} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '5px' }}><Trophy size={16} /> Ranking</button>
         </div>
 
-        {communityTab === 'ranking' ? (() => {
-          const myData = {
-            id: session.user.id,
-            name: userName + ' (Tú)',
-            isMe: true,
-            isPro: isPro,
-            owned: totalOwned,
-            percentage: Math.round((totalOwned / activeTotalStamps) * 100)
-          };
-          
-          const friendsRanking = (friendsData || []).map(u => {
-            const fName = u.stamps_data?.ownerName || 'Usuario Anónimo';
-            const fAlbum = u.stamps_data?.albums?.find(a => a.id === u.stamps_data?.activeAlbumId)?.stamps || [];
-            const fOwned = fAlbum.filter(s => s.count > 0 && activeTeams.some(t => t.code === s.teamCode)).length;
-            const isUserPro = u.is_pro || PRO_NAMES.some(name => fName.toLowerCase().includes(name.toLowerCase()));
-            return {
-              id: u.id,
-              name: fName,
-              isMe: false,
-              isPro: isUserPro,
-              owned: fOwned,
-              percentage: Math.round((fOwned / activeTotalStamps) * 100)
-            };
-          });
-          
-          const leaderboard = [myData, ...friendsRanking].sort((a, b) => b.owned - a.owned);
-
-          return (
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: '25px', backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
-                <Trophy size={48} color="#FFD700" style={{ marginBottom: '10px' }} />
-                <h2 style={{ margin: '0 0 10px 0', color: 'var(--primary)' }}>Ranking Nacional</h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Compite con la comunidad para ver quién completa el álbum primero.</p>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {leaderboard.map((user, index) => {
-                  let badge = null;
-                  if (index === 0) badge = <Crown size={20} color="#FFD700" />;
-                  else if (user.percentage >= 80) badge = <Star size={20} color="#FFD700" />;
-                  else if (user.percentage >= 50) badge = <Star size={20} color="#C0C0C0" />;
-                  
-                  return (
-                    <div key={user.id} className="album-card" style={{ display: 'flex', alignItems: 'center', padding: '15px', ...(user.isMe ? { border: '1px solid var(--primary)', backgroundColor: 'rgba(56, 189, 248, 0.05)' } : {}) }}>
-                      <div style={{ width: '35px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
-                        #{index + 1}
-                      </div>
-                      
-                      <div style={{ flex: 1, marginLeft: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <strong style={{ fontSize: '1.1rem', color: user.isMe ? 'var(--primary)' : 'var(--text-main)' }}>{user.name}</strong>
-                          {user.isPro && <Crown size={14} color="#FFD700" />}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
-                          <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: `${user.percentage}%`, height: '100%', backgroundColor: user.percentage >= 80 ? 'var(--success)' : 'var(--primary)' }}></div>
-                          </div>
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{user.percentage}%</span>
-                        </div>
-                      </div>
-                      
-                      <div style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{user.owned}</span>
-                        <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>{badge}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })() : communityTab === 'grupos' ? (() => {
+        {communityTab === 'grupos' ? (() => {
           const myGroupList = groups.filter(g => g.group_members?.some(m => m.user_id === session.user.id && m.status !== 'pending'));
           const myInvites = groups.filter(g => g.group_members?.some(m => m.user_id === session.user.id && m.status === 'pending'));
 
@@ -3493,6 +3601,7 @@ function MainApp({ session, onLogout }) {
             {activeTab === 'collection' && renderCollectionTab()}
             {activeTab === 'albums' && renderAlbumsTab()}
             {activeTab === 'friends' && renderFriendsTab()}
+            {activeTab === 'ranking' && renderRankingTab()}
             {activeTab === 'profile' && renderProfileTab()}
           </>
         )}
@@ -3611,6 +3720,10 @@ function MainApp({ session, onLogout }) {
         <button className={`nav-item ${activeTab === 'albums' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('albums'); setPaywallFeature(null); }}>
           <Library size={24} />
           <span>Álbumes</span>
+        </button>
+        <button className={`nav-item ${activeTab === 'ranking' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('ranking'); setPaywallFeature(null); }}>
+          <Trophy size={24} />
+          <span>Ranking</span>
         </button>
         <button className={`nav-item ${activeTab === 'profile' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('profile'); setPaywallFeature(null); }}>
           <User size={24} />
