@@ -1534,7 +1534,7 @@ function MainApp({ session, onLogout }) {
       };
     });
     
-    const progressLeaderboard = [myData, ...friendsRanking].sort((a, b) => b.owned - a.owned).slice(0, 50);
+    const progressLeaderboard = [myData, ...friendsRanking].sort((a, b) => b.owned - a.owned);
 
     const myReferralCount = referralRankings?.find(r => r.id === session?.user?.id)?.count || referralCount;
     const myReferralData = {
@@ -1613,6 +1613,34 @@ function MainApp({ session, onLogout }) {
                 </div>
               )}
             </div>
+            {/* Sticky Bottom Bar for Current User */}
+            {(() => {
+              const myRankIndex = progressLeaderboard.findIndex(r => r.id === session?.user?.id);
+              if (myRankIndex === -1) return null;
+              const me = progressLeaderboard[myRankIndex];
+              return (
+                <div style={{ position: 'sticky', bottom: '0px', marginTop: '10px', backgroundColor: 'var(--panel-bg)', padding: '15px', borderRadius: '12px', border: '2px solid var(--primary)', display: 'flex', alignItems: 'center', boxShadow: '0 -4px 15px rgba(0,0,0,0.5)', zIndex: 50 }}>
+                  <div style={{ minWidth: '45px', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.4rem', textAlign: 'center' }}>
+                    #{myRankIndex + 1}
+                  </div>
+                  <div style={{ flex: 1, marginLeft: '10px' }}>
+                    <strong style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>Tú</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                      <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ width: `${me.percentage}%`, height: '100%', backgroundColor: me.percentage >= 80 ? 'var(--success)' : 'var(--primary)' }}></div>
+                      </div>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{me.percentage}%</span>
+                    </div>
+                  </div>
+                  <div style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: 'var(--primary)' }}>{me.owned}</span>
+                    <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>
+                      {myRankIndex === 0 ? <Crown size={20} color="#FFD700" /> : (me.percentage >= 80 ? <Star size={20} color="#FFD700" /> : (me.percentage >= 50 ? <Star size={20} color="#C0C0C0" /> : null))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         ) : (
           <div>
