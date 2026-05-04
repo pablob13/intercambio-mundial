@@ -506,14 +506,11 @@ function MainApp({ session, onLogout }) {
 
   useEffect(() => {
     if (session && isCloud) {
-      const hasSeen = localStorage.getItem('seen_referral_announcement');
-      if (!hasSeen) {
-        // slight delay so it feels like a popup after loading
-        const timer = setTimeout(() => {
-          setShowReferralAnnouncement(true);
-        }, 1500);
-        return () => clearTimeout(timer);
-      }
+      // Show every time they enter the app
+      const timer = setTimeout(() => {
+        setShowReferralAnnouncement(true);
+      }, 1500);
+      return () => clearTimeout(timer);
     }
   }, [session, isCloud]);
   const [paywallFeature, setPaywallFeature] = useState(null);
@@ -1576,39 +1573,53 @@ function MainApp({ session, onLogout }) {
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Compite con la comunidad para ver quién completa el álbum primero.</p>
             </div>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {progressLeaderboard.map((user, index) => {
-                let badge = null;
-                if (index === 0) badge = <Crown size={20} color="#FFD700" />;
-                else if (user.percentage >= 80) badge = <Star size={20} color="#FFD700" />;
-                else if (user.percentage >= 50) badge = <Star size={20} color="#C0C0C0" />;
-                
-                return (
-                  <div key={user.id} className="album-card" style={{ display: 'flex', alignItems: 'center', padding: '15px', ...(user.isMe ? { border: '1px solid var(--primary)', backgroundColor: 'rgba(56, 189, 248, 0.05)' } : {}) }}>
-                    <div style={{ width: '35px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
-                      #{index + 1}
-                    </div>
-                    
-                    <div style={{ flex: 1, marginLeft: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <strong style={{ fontSize: '1.1rem', color: user.isMe ? 'var(--primary)' : 'var(--text-main)' }}>{user.name}</strong>
-                        {user.isPro && <Crown size={14} color={user.proType === 'trial' ? '#C0C0C0' : '#FFD700'} />}
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', filter: !isPro ? 'blur(6px)' : 'none', pointerEvents: !isPro ? 'none' : 'auto', userSelect: !isPro ? 'none' : 'auto' }}>
+                {progressLeaderboard.map((user, index) => {
+                  let badge = null;
+                  if (index === 0) badge = <Crown size={20} color="#FFD700" />;
+                  else if (user.percentage >= 80) badge = <Star size={20} color="#FFD700" />;
+                  else if (user.percentage >= 50) badge = <Star size={20} color="#C0C0C0" />;
+                  
+                  return (
+                    <div key={user.id} className="album-card" style={{ display: 'flex', alignItems: 'center', padding: '15px', ...(user.isMe ? { border: '1px solid var(--primary)', backgroundColor: 'rgba(56, 189, 248, 0.05)' } : {}) }}>
+                      <div style={{ width: '35px', fontWeight: 'bold', color: index < 3 ? '#FFD700' : 'var(--text-muted)', fontSize: index < 3 ? '1.4rem' : '1.1rem', textAlign: 'center' }}>
+                        #{index + 1}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
-                        <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div style={{ width: `${user.percentage}%`, height: '100%', backgroundColor: user.percentage >= 80 ? 'var(--success)' : 'var(--primary)' }}></div>
+                      
+                      <div style={{ flex: 1, marginLeft: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <strong style={{ fontSize: '1.1rem', color: user.isMe ? 'var(--primary)' : 'var(--text-main)' }}>{user.name}</strong>
+                          {user.isPro && <Crown size={14} color={user.proType === 'trial' ? '#C0C0C0' : '#FFD700'} />}
                         </div>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{user.percentage}%</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                          <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${user.percentage}%`, height: '100%', backgroundColor: user.percentage >= 80 ? 'var(--success)' : 'var(--primary)' }}></div>
+                          </div>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', minWidth: '45px', textAlign: 'right', fontWeight: 'bold' }}>{user.percentage}%</span>
+                        </div>
+                      </div>
+                      
+                      <div style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{user.owned}</span>
+                        <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>{badge}</div>
                       </div>
                     </div>
-                    
-                    <div style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-main)' }}>{user.owned}</span>
-                      <div style={{ width: '20px', display: 'flex', justifyContent: 'center' }}>{badge}</div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              {!isPro && (
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: '12px', zIndex: 10, padding: '20px', textAlign: 'center' }}>
+                  <Crown size={48} color="#FFD700" style={{ marginBottom: '15px', filter: 'drop-shadow(0 0 10px rgba(255,215,0,0.5))' }} />
+                  <h3 style={{ margin: '0 0 10px 0', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>Ranking Nacional PRO</h3>
+                  <p style={{ color: '#e2e8f0', margin: '0 0 20px 0', textShadow: '0 1px 2px rgba(0,0,0,0.8)', maxWidth: '280px' }}>Descubre quiénes son los líderes de la comunidad y compite por el primer lugar.</p>
+                  <button className="btn btn-primary" onClick={() => { setActiveTab('profile'); }} style={{ padding: '12px 25px', fontSize: '1.1rem', backgroundColor: '#FFD700', color: 'black', border: 'none', boxShadow: '0 4px 15px rgba(255,215,0,0.3)', fontWeight: 'bold' }}>
+                    <Crown size={18} color="black" style={{ marginRight: '5px' }} />
+                    ¡Gana 24h PRO Gratis!
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -3342,7 +3353,6 @@ function MainApp({ session, onLogout }) {
               style={{ width: '100%', fontWeight: 'bold', fontSize: '1.1rem', padding: '15px', borderRadius: '12px', justifyContent: 'center', marginBottom: '10px' }}
               onClick={() => {
                 setShowReferralAnnouncement(false);
-                localStorage.setItem('seen_referral_announcement', 'true');
                 setActiveTab('profile');
               }}
             >
@@ -3352,7 +3362,6 @@ function MainApp({ session, onLogout }) {
             <button 
               onClick={() => {
                 setShowReferralAnnouncement(false);
-                localStorage.setItem('seen_referral_announcement', 'true');
               }}
               style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', textDecoration: 'underline', cursor: 'pointer' }}
             >
