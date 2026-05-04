@@ -467,6 +467,19 @@ function MainApp({ session, onLogout }) {
 
     processReferrals();
   }, [session]);
+
+  useEffect(() => {
+    if (session && isCloud) {
+      const hasSeen = localStorage.getItem('seen_referral_announcement');
+      if (!hasSeen) {
+        // slight delay so it feels like a popup after loading
+        const timer = setTimeout(() => {
+          setShowReferralAnnouncement(true);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [session, isCloud]);
   const [paywallFeature, setPaywallFeature] = useState(null);
   
   const PRO_BENEFITS = [
@@ -520,6 +533,7 @@ function MainApp({ session, onLogout }) {
   const [showAd, setShowAd] = useState(false);
   const [adCountdown, setAdCountdown] = useState(5);
   const [milestonePopup, setMilestonePopup] = useState(null);
+  const [showReferralAnnouncement, setShowReferralAnnouncement] = useState(false);
   const [currentAd, setCurrentAd] = useState(null);
   const [tradesToday, setTradesToday] = useState(() => {
     const data = JSON.parse(localStorage.getItem('tradesData') || '{"date": "", "count": 0}');
@@ -1559,14 +1573,16 @@ function MainApp({ session, onLogout }) {
         {isCloud && (
           <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '20px', textAlign: 'center' }}>
             <h3 style={{ marginTop: 0, marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-              <Users size={20} color="var(--primary)" /> Gana 24h de PRO Gratis
+              <Users size={20} color="var(--primary)" /> {isPro ? 'Regala 24h de PRO a tus Amigos' : 'Gana 24h de PRO Gratis'}
             </h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
-              Invita a 5 amigos con tu enlace. Si se registran, ¡ambos reciben 24 horas de beneficios PRO!
+              {isPro 
+                ? 'Invita a tus amigos con tu enlace. Si se registran, ¡ellos recibirán 24 horas de beneficios PRO gratis gracias a ti!'
+                : 'Invita a 5 amigos con tu enlace. Si se registran, ¡ambos reciben 24 horas de beneficios PRO!'}
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
               <div style={{ padding: '10px 20px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                {referralCount} / 5 Referidos
+                {referralCount} {isPro ? 'Amigos Invitados' : '/ 5 Referidos'}
               </div>
             </div>
             
@@ -1575,14 +1591,18 @@ function MainApp({ session, onLogout }) {
               style={{ width: '100%', justifyContent: 'center' }}
               onClick={() => {
                 const link = `${window.location.origin}/?ref=${session.user.id}`;
+                const text = isPro 
+                  ? '¡Únete a Mundial Estampas con mi enlace y gana 24 horas de beneficios PRO gratis! 👑⚽️'
+                  : 'Usa mi enlace para registrarte y ambos ganaremos 24 horas de beneficios PRO gratis 👑⚽️';
+                  
                 if (navigator.share) {
                   navigator.share({
                     title: '¡Únete a Mundial Estampas!',
-                    text: 'Usa mi enlace para registrarte y ambos ganaremos 24 horas de beneficios PRO gratis 👑⚽️',
+                    text: text,
                     url: link
                   }).catch(console.error);
                 } else {
-                  navigator.clipboard.writeText(`¡Únete a Mundial Estampas con mi enlace y ganemos 24h de PRO gratis! 👑⚽️\n${link}`);
+                  navigator.clipboard.writeText(`${text}\n${link}`);
                   alert('¡Enlace copiado! Pégalo en WhatsApp o Instagram para invitar a tus amigos.');
                 }
               }}
@@ -3155,6 +3175,47 @@ function MainApp({ session, onLogout }) {
         </div>
         );
       })()}
+
+      {showReferralAnnouncement && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(5px)' }}>
+          <div style={{ backgroundColor: 'var(--panel-bg)', borderRadius: '20px', border: '1px solid var(--primary)', padding: '30px', maxWidth: '400px', width: '100%', textAlign: 'center', boxShadow: '0 15px 40px rgba(0,0,0,0.5)', animation: 'fadeIn 0.4s ease-out' }}>
+            <div style={{ width: '80px', height: '80px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+              <Users size={40} color="var(--primary)" />
+            </div>
+            
+            <h2 style={{ fontSize: '1.8rem', color: 'var(--primary)', margin: '0 0 10px 0' }}>¡Nueva Función!</h2>
+            <p style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: '15px', lineHeight: '1.5' }}>
+              Ahora puedes regalar <strong>24 horas de beneficios PRO</strong> a tus amigos y ganar PRO gratis para ti.
+            </p>
+            
+            <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '12px', marginBottom: '25px', textAlign: 'left', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+              Solo necesitas invitar a tus amigos con tu enlace personalizado. ¡Encuéntralo en tu <strong>Perfil</strong>!
+            </div>
+
+            <button 
+              className="btn btn-primary"
+              style={{ width: '100%', fontWeight: 'bold', fontSize: '1.1rem', padding: '15px', borderRadius: '12px', justifyContent: 'center', marginBottom: '10px' }}
+              onClick={() => {
+                setShowReferralAnnouncement(false);
+                localStorage.setItem('seen_referral_announcement', 'true');
+                setActiveTab('profile');
+              }}
+            >
+              Ir a mi Perfil
+            </button>
+            
+            <button 
+              onClick={() => {
+                setShowReferralAnnouncement(false);
+                localStorage.setItem('seen_referral_announcement', 'true');
+              }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
 
       {milestonePopup && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(5px)' }}>
