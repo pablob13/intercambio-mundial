@@ -3214,7 +3214,6 @@ function MainApp({ session, onLogout }) {
         </div>
       )}
 
-      <div style={{ paddingBottom: '80px' }}></div> {/* Spacer for bottom nav */}
     </div>
   );
 
