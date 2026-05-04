@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, Component } from 'react';
 import Tesseract from 'tesseract.js';
 import html2canvas from 'html2canvas';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone, Sun, Moon } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone, Sun, Moon, Shield } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 
@@ -346,6 +346,7 @@ function MainApp({ session, onLogout }) {
   const [editNameValue, setEditNameValue] = useState(userName);
 
   const [albumsState, setAlbumsState] = useState(null);
+  const [adminStats, setAdminStats] = useState(null);
   const prevUnreadCountRef = useRef(0);
   const [showInstallTutorial, setShowInstallTutorial] = useState(false);
 
@@ -418,6 +419,31 @@ function MainApp({ session, onLogout }) {
   const [proTimer, setProTimer] = useState(null);
   const [timeLeftStr, setTimeLeftStr] = useState('');
   const [referralCount, setReferralCount] = useState(0);
+
+  useEffect(() => {
+    if (activeTab === 'admin' && session?.user?.email === 'pablobesoy@gmail.com') {
+      const loadAdminStats = async () => {
+        const [usersRes, proUsersRes, groupsRes, messagesRes, tradesRes] = await Promise.all([
+          supabase.from('user_stamps').select('id', { count: 'exact', head: true }),
+          supabase.from('user_stamps').select('id', { count: 'exact', head: true }).eq('is_pro', true),
+          supabase.from('sticker_groups').select('id', { count: 'exact', head: true }),
+          supabase.from('group_messages').select('id', { count: 'exact', head: true }),
+          supabase.from('trades').select('id', { count: 'exact', head: true }).catch(() => ({ count: 0 }))
+        ]);
+
+        // Fallback for trades if table doesn't exist
+        
+        setAdminStats({
+          totalUsers: usersRes.count || 0,
+          proUsers: proUsersRes.count || 0,
+          totalGroups: groupsRes.count || 0,
+          totalMessages: messagesRes.count || 0,
+          totalTrades: tradesRes?.count || 0,
+        });
+      };
+      loadAdminStats();
+    }
+  }, [activeTab, session?.user?.email]);
 
   useEffect(() => {
     let checkInterval;
@@ -2223,9 +2249,82 @@ function MainApp({ session, onLogout }) {
           <LogOut size={20} />
           Cerrar Sesión
         </button>
+
+        {session?.user?.email === 'pablobesoy@gmail.com' && (
+          <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: '15px' }} onClick={() => setActiveTab('admin')}>
+            <Shield size={20} />
+            Panel de Administración
+          </button>
+        )}
       </div>
     </div>
   );
+  };
+
+  const renderAdminTab = () => {
+    if (session?.user?.email !== 'pablobesoy@gmail.com') return null;
+
+    return (
+      <div className="tab-content fade-in">
+        <div style={{ textAlign: 'center', marginBottom: '25px', backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <Shield size={48} color="var(--primary)" style={{ marginBottom: '10px' }} />
+          <h2 style={{ margin: '0 0 10px 0', color: 'var(--primary)' }}>Panel Superadmin</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>Métricas y estado general de la plataforma</p>
+        </div>
+
+        {!adminStats ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+            <div className="loading-spinner"></div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Users size={24} color="var(--primary)" />
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Usuarios Totales</span>
+              </div>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{adminStats.totalUsers}</span>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid #FFD700', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Crown size={24} color="#FFD700" />
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Usuarios PRO</span>
+              </div>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFD700' }}>{adminStats.proUsers}</span>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Users size={24} color="var(--success)" />
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Grupos Creados</span>
+              </div>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{adminStats.totalGroups}</span>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <MessageCircle size={24} color="#00d2ff" />
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Mensajes Enviados</span>
+              </div>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#00d2ff' }}>{adminStats.totalMessages}</span>
+            </div>
+
+            <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <ArrowRightLeft size={24} color="var(--warning)" />
+                <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Propuestas Creadas</span>
+              </div>
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>{adminStats.totalTrades}</span>
+            </div>
+            
+            <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', marginTop: '20px' }} onClick={() => setActiveTab('profile')}>
+              Volver al Perfil
+            </button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const handleCreateGroup = async () => {
@@ -3696,6 +3795,7 @@ function MainApp({ session, onLogout }) {
             {activeTab === 'friends' && renderFriendsTab()}
             {activeTab === 'ranking' && renderRankingTab()}
             {activeTab === 'profile' && renderProfileTab()}
+            {activeTab === 'admin' && renderAdminTab()}
           </>
         )}
       </div>
