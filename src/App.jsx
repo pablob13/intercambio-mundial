@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tesseract from 'tesseract.js';
 import html2canvas from 'html2canvas';
-import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone } from 'lucide-react';
+import { Camera, Search, Filter, X, Plus, Minus, Check, ChevronDown, ChevronUp, LogOut, BookOpen, Library, User, PlusCircle, Trash2, Users, ArrowRightLeft, UserPlus, UserMinus, MessageCircle, Clock, CheckCircle, RefreshCw, ArrowLeft, Crown, Star, Handshake, CheckSquare, Target, Globe, Package, Trophy, Send, Inbox, Pen, AlertTriangle, Bell, Share, PlusSquare, MoreVertical, Download, Smartphone, Sun, Moon } from 'lucide-react';
 import { supabase } from './supabase';
 import './index.css';
 import { TEAM_THEMES } from './themes';
@@ -2741,6 +2741,26 @@ function MainApp({ session, onLogout }) {
               <h1 style={{ margin: 0, fontSize: '1.8rem', color: 'var(--header-text, var(--text-main))' }}>Mundial Estampas</h1>
             </div>
           </div>
+          
+          <button 
+            onClick={() => setAlbumsState(prev => ({ ...prev, theme: prev.theme === 'OFICIAL_CLARO' ? 'MUNDIAL' : 'OFICIAL_CLARO' }))}
+            style={{
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'var(--header-text, var(--text-main))',
+              cursor: 'pointer',
+              padding: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              transition: 'all 0.2s ease',
+              backdropFilter: 'blur(5px)',
+              marginTop: '5px'
+            }}
+          >
+            {albumsState?.theme === 'OFICIAL_CLARO' ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
         </div>
         
         <p style={{ textAlign: 'left', marginTop: '15px' }}>Progreso: {percentage}% Completo ({totalOwned} de {activeTotalStamps})</p>
