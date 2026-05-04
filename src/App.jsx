@@ -750,22 +750,14 @@ function MainApp({ session, onLogout }) {
           data.forEach(r => {
              counts[r.referrer_id] = (counts[r.referrer_id] || 0) + 1;
           });
-          const userIds = Object.keys(counts);
-          if (userIds.length > 0) {
-             const { data: usersData } = await supabase.from('user_stamps').select('id, stamps_data, is_pro').in('id', userIds);
-             if (usersData) {
-               const rankings = usersData.map(u => ({
-                 id: u.id,
-                 name: u.stamps_data?.ownerName || 'Usuario Anónimo',
-                 isPro: u.is_pro,
-                 count: counts[u.id],
-                 isMe: u.id === session?.user?.id
-               })).sort((a, b) => b.count - a.count);
-               setReferralRankings(rankings);
-             }
-          } else {
-             setReferralRankings([]);
-          }
+          const rankings = friendsData.map(u => ({
+            id: u.id,
+            name: u.stamps_data?.ownerName || 'Usuario Anónimo',
+            isPro: u.is_pro,
+            count: counts[u.id] || 0,
+            isMe: false
+          })).sort((a, b) => b.count - a.count);
+          setReferralRankings(rankings);
         }
       });
     }
