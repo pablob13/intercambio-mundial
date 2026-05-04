@@ -401,7 +401,7 @@ function MainApp({ session, onLogout }) {
 
   const [isLoadingStamps, setIsLoadingStamps] = useState(true);
   const [activeTab, setActiveTab] = useState('collection'); // 'collection', 'albums', 'profile', 'friends'
-  const [friendsData, setFriendsData] = useState(null);
+  const [friendsData, setFriendsData] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [friendSubTab, setFriendSubTab] = useState('match');
   const [messages, setMessages] = useState([]);
