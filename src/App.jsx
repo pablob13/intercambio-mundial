@@ -386,6 +386,87 @@ function MainApp({ session, onLogout }) {
   const [isProcessingTrade, setIsProcessingTrade] = useState({});
   
   const [isPro, setIsPro] = useState(PRO_EMAILS.includes(session?.user?.email?.toLowerCase()));
+  const [proTimer, setProTimer] = useState(null);
+  const [timeLeftStr, setTimeLeftStr] = useState('');
+  const [referralCount, setReferralCount] = useState(0);
+
+  useEffect(() => {
+    let checkInterval;
+    let visualInterval;
+    if (proTimer) {
+      checkInterval = setInterval(() => {
+        if (Date.now() > proTimer) {
+          setIsPro(false);
+          setProTimer(null);
+        }
+      }, 60000); 
+
+      visualInterval = setInterval(() => {
+        const diff = proTimer - Date.now();
+        if (diff <= 0) {
+          setTimeLeftStr('');
+        } else {
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((diff % (1000 * 60)) / 1000);
+          setTimeLeftStr(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+        }
+      }, 1000);
+    } else {
+      setTimeLeftStr('');
+    }
+    return () => {
+      clearInterval(checkInterval);
+      clearInterval(visualInterval);
+    };
+  }, [proTimer]);
+
+  useEffect(() => {
+    const processReferrals = async () => {
+      if (!session) return;
+      
+      const referralCode = localStorage.getItem('referral_code');
+      if (referralCode && referralCode !== session.user.id) {
+        await supabase.from('referrals').insert({
+          referrer_id: referralCode,
+          referred_id: session.user.id
+        }).catch(() => {}); 
+        localStorage.removeItem('referral_code');
+      }
+
+      let userIsPro = PRO_EMAILS.includes(session.user.email?.toLowerCase());
+      let proEndTime = null;
+
+      const { data: myReferrals } = await supabase.from('referrals').select('created_at').eq('referrer_id', session.user.id).order('created_at', { ascending: true });
+      const count = myReferrals?.length || 0;
+      setReferralCount(count);
+
+      if (!userIsPro && count >= 5) {
+        const fifthReferralDate = new Date(myReferrals[4].created_at).getTime();
+        const endTime = fifthReferralDate + (24 * 60 * 60 * 1000);
+        if (Date.now() < endTime) {
+          userIsPro = true;
+          proEndTime = endTime;
+        }
+      }
+
+      if (!userIsPro) {
+        const { data: iWasReferred } = await supabase.from('referrals').select('created_at').eq('referred_id', session.user.id).maybeSingle();
+        if (iWasReferred) {
+          const endTime = new Date(iWasReferred.created_at).getTime() + (24 * 60 * 60 * 1000);
+          if (Date.now() < endTime) {
+            userIsPro = true;
+            proEndTime = endTime;
+          }
+        }
+      }
+
+      setIsPro(userIsPro);
+      setProTimer(proEndTime);
+    };
+
+    processReferrals();
+  }, [session]);
   const [paywallFeature, setPaywallFeature] = useState(null);
   
   const PRO_BENEFITS = [
@@ -1474,6 +1555,42 @@ function MainApp({ session, onLogout }) {
             </div>
           </div>
         </div>
+
+        {isCloud && (
+          <div style={{ backgroundColor: 'var(--panel-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '20px', textAlign: 'center' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <Users size={20} color="var(--primary)" /> Gana 24h de PRO Gratis
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
+              Invita a 5 amigos con tu enlace. Si se registran, ¡ambos reciben 24 horas de beneficios PRO!
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '15px' }}>
+              <div style={{ padding: '10px 20px', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', border: '1px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                {referralCount} / 5 Referidos
+              </div>
+            </div>
+            
+            <button 
+              className="btn btn-primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                const link = `${window.location.origin}/?ref=${session.user.id}`;
+                if (navigator.share) {
+                  navigator.share({
+                    title: '¡Únete a Mundial Estampas!',
+                    text: 'Usa mi enlace para registrarte y ambos ganaremos 24 horas de beneficios PRO gratis 👑⚽️',
+                    url: link
+                  }).catch(console.error);
+                } else {
+                  navigator.clipboard.writeText(`¡Únete a Mundial Estampas con mi enlace y ganemos 24h de PRO gratis! 👑⚽️\n${link}`);
+                  alert('¡Enlace copiado! Pégalo en WhatsApp o Instagram para invitar a tus amigos.');
+                }
+              }}
+            >
+              <Share size={18} /> Compartir mi enlace
+            </button>
+          </div>
+        )}
 
         {!isPro && isCloud && (
           <div style={{ backgroundColor: 'rgba(255, 215, 0, 0.1)', border: '1px solid #FFD700', padding: '20px', borderRadius: '12px', marginBottom: '20px' }}>
@@ -3403,6 +3520,13 @@ function MainApp({ session, onLogout }) {
         </div>
       </div>
 
+      {timeLeftStr && (
+        <div style={{ position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'rgba(255, 215, 0, 0.9)', color: 'black', padding: '8px 16px', borderRadius: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1000, boxShadow: '0 4px 12px rgba(0,0,0,0.3)', backdropFilter: 'blur(5px)' }}>
+          <Crown size={18} />
+          PRO: {timeLeftStr}
+        </div>
+      )}
+
       <nav className="bottom-nav">
         <button className={`nav-item ${activeTab === 'collection' && !paywallFeature ? 'active' : ''}`} onClick={() => { setActiveTab('collection'); setPaywallFeature(null); }}>
           <BookOpen size={24} />
@@ -3877,6 +4001,11 @@ export default function App() {
     const invitePro = urlParams.get('invitePro');
     if (invitePro) {
       sessionStorage.setItem('pendingProInvite', 'true');
+    }
+    
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+      localStorage.setItem('referral_code', refCode);
     }
 
     // Revisar si venimos de un enlace de recuperación
