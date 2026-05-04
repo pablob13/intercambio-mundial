@@ -426,40 +426,66 @@ function MainApp({ session, onLogout }) {
     if (activeTab === 'admin' && SUPER_ADMINS.includes(session?.user?.email?.toLowerCase())) {
       const loadAdminStats = async () => {
         try {
-          const [usersRes, proUsersRes, groupsRes, messagesRes, tradesRes, usersData, refsData, msgsData] = await Promise.all([
+          const [usersRes, proUsersRes, groupsRes, messagesRes, tradesRes, rpcRes] = await Promise.all([
             supabase.from('user_stamps').select('id', { count: 'exact', head: true }),
             supabase.from('user_stamps').select('id', { count: 'exact', head: true }).eq('is_pro', true),
             supabase.from('sticker_groups').select('id', { count: 'exact', head: true }),
             supabase.from('group_messages').select('id', { count: 'exact', head: true }),
             supabase.from('trades').select('id', { count: 'exact', head: true }),
-            supabase.from('user_stamps').select('created_at'),
-            supabase.from('referrals').select('created_at'),
-            supabase.from('group_messages').select('created_at')
+            supabase.rpc('get_admin_daily_stats')
           ]);
           
-          const processDailyData = (dataArray) => {
-            if (!dataArray) return {};
-            return dataArray.reduce((acc, row) => {
-              if (!row.created_at) return acc;
-              const date = row.created_at.split('T')[0];
-              acc[date] = (acc[date] || 0) + 1;
-              return acc;
-            }, {});
-          };
+          let chartData = [];
+          
+          if (rpcRes.data) {
+            const stats = rpcRes.data;
+            const dailyMap = {};
+            
+            const mergeData = (arr, key) => {
+              if (!arr) return;
+              arr.forEach(row => {
+                if (!dailyMap[row.date]) dailyMap[row.date] = { date: row.date, Usuarios: 0, Referidos: 0, Mensajes: 0 };
+                dailyMap[row.date][key] = row.count;
+              });
+            };
+            
+            mergeData(stats.users, 'Usuarios');
+            mergeData(stats.referrals, 'Referidos');
+            mergeData(stats.messages, 'Mensajes');
+            
+            chartData = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
+          } else {
+            // Fallback si la funcion RPC no existe aun
+            const [usersData, refsData, msgsData] = await Promise.all([
+              supabase.from('user_stamps').select('created_at'),
+              supabase.from('referrals').select('created_at'),
+              supabase.from('group_messages').select('created_at')
+            ]);
+            
+            const processDailyData = (dataArray) => {
+              if (!dataArray) return {};
+              return dataArray.reduce((acc, row) => {
+                if (!row.created_at) return acc;
+                const date = row.created_at.split('T')[0];
+                acc[date] = (acc[date] || 0) + 1;
+                return acc;
+              }, {});
+            };
 
-          const usersDaily = processDailyData(usersData?.data);
-          const refsDaily = processDailyData(refsData?.data);
-          const msgsDaily = processDailyData(msgsData?.data);
+            const usersDaily = processDailyData(usersData?.data);
+            const refsDaily = processDailyData(refsData?.data);
+            const msgsDaily = processDailyData(msgsData?.data);
 
-          const allDates = new Set([...Object.keys(usersDaily), ...Object.keys(refsDaily), ...Object.keys(msgsDaily)]);
-          const sortedDates = Array.from(allDates).sort();
+            const allDates = new Set([...Object.keys(usersDaily), ...Object.keys(refsDaily), ...Object.keys(msgsDaily)]);
+            const sortedDates = Array.from(allDates).sort();
 
-          const chartData = sortedDates.map(date => ({
-            date,
-            Usuarios: usersDaily[date] || 0,
-            Referidos: refsDaily[date] || 0,
-            Mensajes: msgsDaily[date] || 0
-          }));
+            chartData = sortedDates.map(date => ({
+              date,
+              Usuarios: usersDaily[date] || 0,
+              Referidos: refsDaily[date] || 0,
+              Mensajes: msgsDaily[date] || 0
+            }));
+          }
           
           setAdminStats({
             totalUsers: usersRes?.count || 0,
