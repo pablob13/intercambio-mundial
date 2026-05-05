@@ -2165,7 +2165,7 @@ function MainApp({ session, onLogout }) {
                     </div>
                   </div>
                 </div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? 'var(--text-main)' : 'var(--text-muted)' }}>{a.title}</div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 'bold', color: a.condition ? '#ffffff' : '#94a3b8' }}>{a.title}</div>
               </div>
             ))}
           </div>
@@ -2875,10 +2875,11 @@ function MainApp({ session, onLogout }) {
                 {messages.filter(m => (m.sender_id === session.user.id && m.receiver_id === selectedFriend.id) || (m.sender_id === selectedFriend.id && m.receiver_id === session.user.id)).map(msg => {
                   const isProposal = msg.content.startsWith('[TRADE_PROPOSAL]');
                   const isAccepted = msg.content.startsWith('[TRADE_ACCEPTED]');
+                  const isRejected = msg.content.startsWith('[TRADE_REJECTED]');
 
-                  if (isProposal || isAccepted) {
+                  if (isProposal || isAccepted || isRejected) {
                     try {
-                      const tradeData = JSON.parse(msg.content.replace(/\[TRADE_PROPOSAL\] |\[TRADE_ACCEPTED\] /, ''));
+                      const tradeData = JSON.parse(msg.content.replace(/\[TRADE_PROPOSAL\] |\[TRADE_ACCEPTED\] |\[TRADE_REJECTED\] /, ''));
                       const amISender = msg.sender_id === session.user.id;
                       const myGiveList = amISender ? tradeData.give : tradeData.receive;
                       const myReceiveList = amISender ? tradeData.receive : tradeData.give;
@@ -2955,12 +2956,25 @@ function MainApp({ session, onLogout }) {
                         }
                       };
 
+                      const handleRejectTrade = async () => {
+                        if (isProcessingTrade[msg.id]) return;
+                        if (!window.confirm("¿Seguro que deseas rechazar este intercambio?")) return;
+                        setIsProcessingTrade(prev => ({ ...prev, [msg.id]: true }));
+                        try {
+                          const newContent = msg.content.replace('[TRADE_PROPOSAL]', '[TRADE_REJECTED]');
+                          await supabase.from('messages').update({ content: newContent }).eq('id', msg.id);
+                          setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, content: newContent } : m));
+                        } finally {
+                          setIsProcessingTrade(prev => ({ ...prev, [msg.id]: false }));
+                        }
+                      };
+
                       return (
-                        <div key={msg.id} style={{ alignSelf: 'center', backgroundColor: 'var(--panel-bg)', border: `1px solid ${isAccepted ? 'var(--success)' : 'var(--primary)'}`, borderRadius: '12px', padding: '15px', maxWidth: '90%', width: '100%', marginBottom: '10px' }}>
-                          <h4 style={{ margin: '0 0 15px 0', textAlign: 'center', color: isAccepted ? 'var(--success)' : 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                            <Handshake size={20} /> {isAccepted ? 'Intercambio Realizado' : 'Propuesta de Intercambio'}
+                        <div key={msg.id} style={{ alignSelf: 'center', backgroundColor: 'var(--panel-bg)', border: `1px solid ${isAccepted ? 'var(--success)' : isRejected ? 'var(--danger)' : 'var(--primary)'}`, borderRadius: '12px', padding: '15px', maxWidth: '90%', width: '100%', marginBottom: '10px' }}>
+                          <h4 style={{ margin: '0 0 15px 0', textAlign: 'center', color: isAccepted ? 'var(--success)' : isRejected ? 'var(--danger)' : 'var(--primary)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                            <Handshake size={20} /> {isAccepted ? 'Intercambio Realizado' : isRejected ? 'Intercambio Rechazado' : 'Propuesta de Intercambio'}
                           </h4>
-                          <div style={{ display: 'flex', gap: '15px', justifyContent: 'space-between', marginBottom: '15px' }}>
+                          <div style={{ display: 'flex', gap: '15px', justifyContent: 'space-between', marginBottom: '15px', opacity: isRejected ? 0.5 : 1 }}>
                             <div style={{ flex: 1, textAlign: 'center' }}>
                               <strong style={{ fontSize: '0.8rem', color: 'var(--warning)', display: 'block', marginBottom: '5px' }}>Tú Das</strong>
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
@@ -2976,17 +2990,29 @@ function MainApp({ session, onLogout }) {
                               </div>
                             </div>
                           </div>
-                          {!amISender && !isAccepted ? (
-                            <button 
-                              className="btn btn-success" 
-                              disabled={isProcessingTrade[msg.id]}
-                              style={{ width: '100%', justifyContent: 'center', opacity: isProcessingTrade[msg.id] ? 0.7 : 1, cursor: isProcessingTrade[msg.id] ? 'not-allowed' : 'pointer' }} 
-                              onClick={handleAcceptTrade}
-                            >
-                              {isProcessingTrade[msg.id] ? 'Procesando...' : 'Aceptar Intercambio'}
-                            </button>
+                          {!amISender && !isAccepted && !isRejected ? (
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                              <button 
+                                className="btn btn-secondary" 
+                                disabled={isProcessingTrade[msg.id]}
+                                style={{ flex: 1, justifyContent: 'center', opacity: isProcessingTrade[msg.id] ? 0.7 : 1, cursor: isProcessingTrade[msg.id] ? 'not-allowed' : 'pointer' }} 
+                                onClick={handleRejectTrade}
+                              >
+                                {isProcessingTrade[msg.id] ? '...' : 'Rechazar'}
+                              </button>
+                              <button 
+                                className="btn btn-success" 
+                                disabled={isProcessingTrade[msg.id]}
+                                style={{ flex: 2, justifyContent: 'center', opacity: isProcessingTrade[msg.id] ? 0.7 : 1, cursor: isProcessingTrade[msg.id] ? 'not-allowed' : 'pointer' }} 
+                                onClick={handleAcceptTrade}
+                              >
+                                {isProcessingTrade[msg.id] ? 'Procesando...' : 'Aceptar'}
+                              </button>
+                            </div>
                           ) : isAccepted ? (
                             <div style={{ textAlign: 'center', color: 'var(--success)', fontWeight: 'bold' }}>✓ Estampas Actualizadas</div>
+                          ) : isRejected ? (
+                            <div style={{ textAlign: 'center', color: 'var(--danger)', fontWeight: 'bold' }}>✕ Propuesta Cancelada</div>
                           ) : (
                             <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Esperando respuesta...</div>
                           )}
@@ -3788,75 +3814,6 @@ function MainApp({ session, onLogout }) {
           </div>
         </div>
       )}
-      {isSpecialStampsModalOpen && (
-        <div className="scanner-modal" onClick={() => setIsSpecialStampsModalOpen(false)}>
-          <div className="scanner-content" style={{ maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>Estampas Especiales</h2>
-              <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setIsSpecialStampsModalOpen(false)} />
-            </div>
-            
-            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <h3 style={{ marginBottom: '10px', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>🛡️ Escudos Faltantes</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {stamps.filter(s => isEscudo(s.id) && s.count === 0).map(s => (
-                    <span key={s.id} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
-                      {s.id}
-                    </span>
-                  ))}
-                  {stamps.filter(s => isEscudo(s.id) && s.count === 0).length === 0 && (
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>¡Ya tienes todos los escudos!</span>
-                  )}
-                </div>
-              </div>
-              
-              <div>
-                <h3 style={{ marginBottom: '10px', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>🛡️ Escudos Pegados</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {stamps.filter(s => isEscudo(s.id) && s.count > 0).map(s => (
-                    <span key={s.id} style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
-                      {s.id} {s.count > 1 ? `(+${s.count - 1})` : ''}
-                    </span>
-                  ))}
-                  {stamps.filter(s => isEscudo(s.id) && s.count > 0).length === 0 && (
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Aún no tienes ningún escudo.</span>
-                  )}
-                </div>
-              </div>
-              
-              <div>
-                <h3 style={{ marginBottom: '10px', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>📸 Fotos de Equipo Faltantes</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {stamps.filter(s => isTeamPhoto(s.id) && s.count === 0).map(s => (
-                    <span key={s.id} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
-                      {s.id}
-                    </span>
-                  ))}
-                  {stamps.filter(s => isTeamPhoto(s.id) && s.count === 0).length === 0 && (
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>¡Ya tienes todas las fotos de equipo!</span>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h3 style={{ marginBottom: '10px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>📸 Fotos de Equipo Pegadas</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {stamps.filter(s => isTeamPhoto(s.id) && s.count > 0).map(s => (
-                    <span key={s.id} style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
-                      {s.id} {s.count > 1 ? `(+${s.count - 1})` : ''}
-                    </span>
-                  ))}
-                  {stamps.filter(s => isTeamPhoto(s.id) && s.count > 0).length === 0 && (
-                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Aún no tienes ninguna foto de equipo.</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 
@@ -4281,6 +4238,75 @@ function MainApp({ session, onLogout }) {
             <div className="loading-spinner"></div>
             <p style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{scanProgress}%</p>
             <p style={{ color: '#94a3b8', marginTop: 10 }}>Leyendo texto con Inteligencia Artificial. Esto puede tardar unos segundos.</p>
+          </div>
+        </div>
+      )}
+
+      {isSpecialStampsModalOpen && (
+        <div className="scanner-modal" style={{ zIndex: 9999 }} onClick={() => setIsSpecialStampsModalOpen(false)}>
+          <div className="scanner-content" style={{ maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h2 style={{ margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>Estampas Especiales</h2>
+              <X size={24} style={{ cursor: 'pointer', color: '#94a3b8' }} onClick={() => setIsSpecialStampsModalOpen(false)} />
+            </div>
+            
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '10px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <h3 style={{ marginBottom: '10px', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>🛡️ Escudos Faltantes</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {stamps.filter(s => isEscudo(s.id) && s.count === 0).map(s => (
+                    <span key={s.id} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                      {s.id}
+                    </span>
+                  ))}
+                  {stamps.filter(s => isEscudo(s.id) && s.count === 0).length === 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>¡Ya tienes todos los escudos!</span>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h3 style={{ marginBottom: '10px', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px' }}>🛡️ Escudos Pegados</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {stamps.filter(s => isEscudo(s.id) && s.count > 0).map(s => (
+                    <span key={s.id} style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                      {s.id} {s.count > 1 ? `(+${s.count - 1})` : ''}
+                    </span>
+                  ))}
+                  {stamps.filter(s => isEscudo(s.id) && s.count > 0).length === 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Aún no tienes ningún escudo.</span>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h3 style={{ marginBottom: '10px', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>📸 Fotos de Equipo Faltantes</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {stamps.filter(s => isTeamPhoto(s.id) && s.count === 0).map(s => (
+                    <span key={s.id} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                      {s.id}
+                    </span>
+                  ))}
+                  {stamps.filter(s => isTeamPhoto(s.id) && s.count === 0).length === 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>¡Ya tienes todas las fotos de equipo!</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ marginBottom: '10px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '8px' }}>📸 Fotos de Equipo Pegadas</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {stamps.filter(s => isTeamPhoto(s.id) && s.count > 0).map(s => (
+                    <span key={s.id} style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', color: '#10b981', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem' }}>
+                      {s.id} {s.count > 1 ? `(+${s.count - 1})` : ''}
+                    </span>
+                  ))}
+                  {stamps.filter(s => isTeamPhoto(s.id) && s.count > 0).length === 0 && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Aún no tienes ninguna foto de equipo.</span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
