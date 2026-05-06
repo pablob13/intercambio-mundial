@@ -602,9 +602,6 @@ function MainApp({ session, onLogout }) {
           }
         }
       }
-
-      }
-
       if (!userIsPro || currentProType === 'trial') {
         const storedOfferStr = localStorage.getItem('proOfferData');
         let offerData = storedOfferStr ? JSON.parse(storedOfferStr) : null;
