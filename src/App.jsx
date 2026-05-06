@@ -421,6 +421,8 @@ function MainApp({ session, onLogout }) {
   const [proTimer, setProTimer] = useState(null);
   const [timeLeftStr, setTimeLeftStr] = useState('');
   const [referralCount, setReferralCount] = useState(0);
+  const [proOffer, setProOffer] = useState(null);
+  const [offerTimeLeftStr, setOfferTimeLeftStr] = useState('');
 
   useEffect(() => {
     if (activeTab === 'admin' && SUPER_ADMINS.includes(session?.user?.email?.toLowerCase())) {
@@ -530,11 +532,31 @@ function MainApp({ session, onLogout }) {
     } else {
       setTimeLeftStr('');
     }
+
+    let visualOfferInterval;
+    if (proOffer?.active) {
+      visualOfferInterval = setInterval(() => {
+        const diff = proOffer.endTime - Date.now();
+        if (diff <= 0) {
+          setOfferTimeLeftStr('');
+          setProOffer({ active: false, expired: true });
+        } else {
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((diff % (1000 * 60)) / 1000);
+          setOfferTimeLeftStr(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+        }
+      }, 1000);
+    } else {
+      setOfferTimeLeftStr('');
+    }
+
     return () => {
       clearInterval(checkInterval);
       clearInterval(visualInterval);
+      clearInterval(visualOfferInterval);
     };
-  }, [proTimer]);
+  }, [proTimer, proOffer]);
 
   useEffect(() => {
     const processReferrals = async () => {
@@ -581,6 +603,29 @@ function MainApp({ session, onLogout }) {
         }
       }
 
+      }
+
+      if (!userIsPro || currentProType === 'trial') {
+        const storedOfferStr = localStorage.getItem('proOfferData');
+        let offerData = storedOfferStr ? JSON.parse(storedOfferStr) : null;
+        
+        if (!offerData) {
+           offerData = {
+             endTime: Date.now() + 48 * 60 * 60 * 1000,
+             claimed: false
+           };
+           localStorage.setItem('proOfferData', JSON.stringify(offerData));
+        }
+
+        if (offerData.claimed) {
+           // Si ya lo reclamó, el webhook de Stripe se encargará de darle el PRO en BD
+        } else if (Date.now() < offerData.endTime) {
+           setProOffer({ active: true, endTime: offerData.endTime });
+        } else {
+           setProOffer({ active: false, expired: true });
+        }
+      }
+
       setIsPro(userIsPro);
       setProType(currentProType);
       setProTimer(proEndTime);
@@ -598,6 +643,24 @@ function MainApp({ session, onLogout }) {
       return () => clearTimeout(timer);
     }
   }, [session, isCloud]);
+
+  const closeProOffer = () => {
+    setProOffer(null);
+  };
+
+  const claimProOffer = () => {
+     let offerData = JSON.parse(localStorage.getItem('proOfferData'));
+     if (offerData && !offerData.claimed) {
+       offerData.claimed = true;
+       localStorage.setItem('proOfferData', JSON.stringify(offerData));
+       setProOffer(null);
+       
+       // Link de prueba gratis oficial
+       const stripeLinkTrial = "https://buy.stripe.com/bJe28q27U29j7hL3sjabK02"; 
+       window.open(`${stripeLinkTrial}?client_reference_id=${session.user.id}`, '_blank');
+     }
+  };
+
   const [paywallFeature, setPaywallFeature] = useState(null);
   
   const PRO_BENEFITS = [
@@ -3822,7 +3885,27 @@ function MainApp({ session, onLogout }) {
   const totalPending = pendingReceivedCount + myInvitesCount + unreadChatCount;
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ position: 'relative' }}>
+      {proOffer?.active && !isPro && (
+        <div style={{ backgroundColor: '#FFD700', color: 'black', padding: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', zIndex: 100, boxShadow: '0 4px 15px rgba(255,215,0,0.3)', borderBottom: '2px solid #E6C200', position: 'sticky', top: 0 }}>
+          <button style={{ position: 'absolute', top: '5px', right: '5px', background: 'none', border: 'none', cursor: 'pointer', color: 'black', padding: '5px' }} onClick={closeProOffer}>
+            <X size={16} />
+          </button>
+          <div style={{ fontWeight: 'bold', fontSize: '0.95rem', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <Clock size={16} /> OFERTA ESPECIAL: {offerTimeLeftStr}
+          </div>
+          <div style={{ fontSize: '0.85rem', textAlign: 'center', lineHeight: '1.4' }}>
+            <div style={{ marginBottom: '6px' }}>
+              🌍 <strong>¡Desbloquea la Comunidad PRO!</strong> 🌍<br/>
+              Crea grupos ilimitados, chatea en vivo con tus amigos y armen intercambios masivos.
+            </div>
+            Activa <strong>7 Días de Prueba Gratis</strong>. Cancela sin costo antes del cobro.
+          </div>
+          <button className="btn" style={{ backgroundColor: 'black', color: '#FFD700', padding: '8px 20px', fontSize: '0.85rem', fontWeight: 'bold', marginTop: '5px', borderRadius: '20px' }} onClick={claimProOffer}>
+            Iniciar Prueba Gratis
+          </button>
+        </div>
+      )}
       <div className="main-content-scroll">
         {paywallFeature ? (
           <ProPaywall 

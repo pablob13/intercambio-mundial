@@ -309,14 +309,17 @@ body::before {
 
 .login-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  min-height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
   background: var(--bg-color);
   padding: 20px;
 }
 
 .login-card {
+  margin: auto;
   background-color: var(--panel-bg);
   border: 1px solid var(--border);
   border-radius: 16px;
