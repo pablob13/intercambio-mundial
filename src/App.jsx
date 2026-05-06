@@ -632,14 +632,14 @@ function MainApp({ session, onLogout }) {
   }, [session]);
 
   useEffect(() => {
-    if (session && isCloud) {
+    if (session && isCloud && !isPro) {
       // Show every time they enter the app
       const timer = setTimeout(() => {
         setShowReferralAnnouncement(true);
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [session, isCloud]);
+  }, [session, isCloud, isPro]);
 
   const closeProOffer = () => {
     setProOffer(null);
