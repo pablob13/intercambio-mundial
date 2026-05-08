@@ -1270,12 +1270,13 @@ function MainApp({ session, onLogout }) {
     const grouped = {};
     missing.forEach(s => {
       if (!grouped[s.teamCode]) grouped[s.teamCode] = [];
-      grouped[s.teamCode].push(`${s.id}`);
+      // Solo el número, sin repetir el código del equipo
+      grouped[s.teamCode].push(s.number);
     });
     
     let text = `Mis estampas FALTANTES del Mundial 2026 (${userName}):\n\n`;
     Object.keys(grouped).forEach(teamCode => {
-      text += `${teamCode}: ${grouped[teamCode].join(', ')}\n`;
+      text += `${teamCode}:${grouped[teamCode].join(',')}\n`;
     });
     
     text += `\n⚽ Para hacer intercambios y ver mis repetidas, únete a la comunidad en mundialestampas.com`;
@@ -4549,6 +4550,18 @@ export default function App() {
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     // Guardar el parametro de joinGroup en sessionStorage para que sobreviva a redirecciones OAuth
@@ -4652,6 +4665,18 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      {!isOnline && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          backgroundColor: '#1e293b', color: '#f59e0b',
+          padding: '8px 16px', textAlign: 'center',
+          fontSize: '0.82rem', fontWeight: '600',
+          borderBottom: '2px solid #f59e0b',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+        }}>
+          📵 Sin conexión — Estás viendo tu colección guardada en este dispositivo
+        </div>
+      )}
       <MainApp session={session} onLogout={handleLogout} />
     </ErrorBoundary>
   );

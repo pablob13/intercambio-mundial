@@ -1,12 +1,21 @@
 {
-  "name": "Mundial Estampas",
+  "name": "Mundial Estampas 2026",
   "short_name": "Mundial 2026",
-  "description": "Tu colección digital del Mundial 2026",
+  "description": "Tu colección digital del Mundial 2026. Funciona sin internet.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0f172a",
   "theme_color": "#3b82f6",
+  "categories": ["sports", "entertainment"],
   "icons": [
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
     {
       "src": "/logo.png",
       "type": "image/png",
