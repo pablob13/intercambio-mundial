@@ -1307,12 +1307,18 @@ function MainApp({ session, onLogout }) {
     }
     
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for UTF-8 in Excel
-    csvContent += "Equipo,Estampa,ID\n";
+    csvContent += "Equipo,Estampas Faltantes\n";
     
+    const grouped = {};
     missing.forEach(s => {
       const team = TEAMS.find(t => t.code === s.teamCode);
       const teamName = team ? team.name : s.teamCode;
-      csvContent += `${teamName},${s.number},${s.id}\n`;
+      if (!grouped[teamName]) grouped[teamName] = [];
+      grouped[teamName].push(s.number);
+    });
+
+    Object.keys(grouped).forEach(teamName => {
+      csvContent += `"${teamName}","${grouped[teamName].join(', ')}"\n`;
     });
     
     const encodedUri = encodeURI(csvContent);
