@@ -1312,7 +1312,7 @@ function MainApp({ session, onLogout }) {
     const grouped = {};
     missing.forEach(s => {
       const team = TEAMS.find(t => t.code === s.teamCode);
-      const teamName = team ? team.name : s.teamCode;
+      const teamName = team ? `${team.flag} ${team.name}` : s.teamCode;
       if (!grouped[teamName]) grouped[teamName] = [];
       grouped[teamName].push(s.number);
     });
