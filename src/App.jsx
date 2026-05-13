@@ -1307,7 +1307,13 @@ function MainApp({ session, onLogout }) {
     }
     
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for UTF-8 in Excel
-    csvContent += "Equipo,Estampas Faltantes\n";
+    
+    // Header de Marca
+    csvContent += `"🏆 MUNDIAL ESTAMPAS 2026 🏆"\n`;
+    csvContent += `"Generado desde la mejor app para completar tu colección"\n`;
+    csvContent += `"Usuario: ${userName}"\n\n`;
+    
+    csvContent += `"Equipo","Estampas Faltantes"\n`;
     
     const grouped = {};
     missing.forEach(s => {
