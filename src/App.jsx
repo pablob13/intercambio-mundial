@@ -1286,6 +1286,36 @@ function MainApp({ session, onLogout }) {
     });
   };
 
+  const exportMissingToExcel = () => {
+    if (!isPro) {
+      setPaywallFeature({ name: "Exportar Faltantes a Excel", description: "Descarga un archivo CSV con todas las estampas que te faltan, listo para abrir en Excel y llevar tu control." });
+      return;
+    }
+    
+    const missing = stamps.filter(s => s.count === 0);
+    if (missing.length === 0) {
+      alert("¡Felicidades! Tienes todas las estampas del mundial.");
+      return;
+    }
+    
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // BOM for UTF-8 in Excel
+    csvContent += "Equipo,Estampa,ID\n";
+    
+    missing.forEach(s => {
+      const team = TEAMS.find(t => t.code === s.teamCode);
+      const teamName = team ? team.name : s.teamCode;
+      csvContent += `${teamName},${s.number},${s.id}\n`;
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "faltantes_mundial_2026.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const toggleTeam = (teamCode) => {
     setExpandedTeams(prev => ({ ...prev, [teamCode]: !prev[teamCode] }));
   };
@@ -3446,6 +3476,11 @@ function MainApp({ session, onLogout }) {
           </button>
         )}
       </div>
+
+      <button className="btn" style={{ backgroundColor: isPro ? '#10b981' : '#FFD700', color: isPro ? 'white' : 'black', width: '100%', justifyContent: 'center', fontWeight: 'bold', marginBottom: '15px', borderRadius: '12px' }} onClick={exportMissingToExcel}>
+        {!isPro && <Crown size={18} style={{ marginRight: '8px' }} />}
+        {isPro ? <><Download size={18} style={{ marginRight: '8px' }} /> Exportar Faltantes a Excel</> : 'Exportar Faltantes a Excel (PRO)'}
+      </button>
 
       <div className="controls" style={{ display: 'flex', gap: '10px' }}>
         <div style={{ position: 'relative', flex: 1 }}>
