@@ -1288,8 +1288,16 @@ function MainApp({ session, onLogout }) {
 
   const exportMissingToExcel = () => {
     if (!isPro) {
-      setPaywallFeature({ name: "Exportar Faltantes a Excel", description: "Descarga un archivo CSV con todas las estampas que te faltan, listo para abrir en Excel y llevar tu control." });
-      return;
+      const hasDownloadedFree = localStorage.getItem('hasDownloadedExcelFree');
+      if (hasDownloadedFree) {
+        setPaywallFeature({ name: "Exportar a Excel Ilimitado", description: "Ya utilizaste tu descarga gratuita. Hazte PRO para descargar la lista a Excel las veces que quieras y llevar un control perfecto." });
+        return;
+      }
+      
+      const proceed = window.confirm("Tienes 1 descarga gratuita de tus faltantes a Excel. ¿Deseas usarla ahora?");
+      if (!proceed) return;
+      
+      localStorage.setItem('hasDownloadedExcelFree', 'true');
     }
     
     const missing = stamps.filter(s => s.count === 0);
@@ -3479,7 +3487,7 @@ function MainApp({ session, onLogout }) {
 
       <button className="btn" style={{ backgroundColor: isPro ? '#10b981' : '#FFD700', color: isPro ? 'white' : 'black', width: '100%', justifyContent: 'center', fontWeight: 'bold', marginBottom: '15px', borderRadius: '12px' }} onClick={exportMissingToExcel}>
         {!isPro && <Crown size={18} style={{ marginRight: '8px' }} />}
-        {isPro ? <><Download size={18} style={{ marginRight: '8px' }} /> Exportar Faltantes a Excel</> : 'Exportar Faltantes a Excel (PRO)'}
+        {isPro ? <><Download size={18} style={{ marginRight: '8px' }} /> Exportar Faltantes a Excel</> : (localStorage.getItem('hasDownloadedExcelFree') ? 'Exportar Faltantes a Excel (PRO)' : 'Exportar Faltantes a Excel (1 Gratis)')}
       </button>
 
       <div className="controls" style={{ display: 'flex', gap: '10px' }}>
