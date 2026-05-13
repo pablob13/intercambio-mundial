@@ -321,6 +321,25 @@ const AdBanner = ({ isPro, format = 'horizontal' }) => {
   );
 };
 
+const AdSenseComponent = () => {
+  useEffect(() => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+      console.error("AdSense error", e);
+    }
+  }, []);
+
+  return (
+    <ins className="adsbygoogle"
+         style={{ display: 'block', minWidth: '300px', minHeight: '250px' }}
+         data-ad-client="ca-pub-7619118541209092"
+         data-ad-slot="7436867422"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+  );
+};
+
 const ProPaywall = ({ featureName, description, onUpgrade }) => (
   <div className="tab-content fade-in" style={{ padding: '20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '60vh' }}>
     <div style={{ backgroundColor: 'rgba(255, 215, 0, 0.1)', padding: '30px', borderRadius: '16px', border: '1px solid #FFD700', margin: '20px auto', maxWidth: '400px' }}>
@@ -1079,16 +1098,16 @@ function MainApp({ session, onLogout }) {
   const percentage = Math.round((totalOwned / activeTotalStamps) * 100);
 
   useEffect(() => {
-    if (!isPro && percentage > 33) {
+    if (!isPro) {
       const interval = setInterval(() => {
-        setCurrentAd(ADS[Math.floor(Math.random() * ADS.length)]);
+        setCurrentAd({ type: 'adsense' });
         setAdCountdown(5);
         setShowAd(true);
-      }, 75000); // 75 seconds
+      }, 60000); // 60 seconds
 
       return () => clearInterval(interval);
     }
-  }, [isPro, percentage]);
+  }, [isPro]);
 
   useEffect(() => {
     if (showAd && adCountdown > 0) {
@@ -3805,29 +3824,52 @@ function MainApp({ session, onLogout }) {
             )}
           </div>
           
-          <img src={currentAd.img} alt="Ad" style={{ width: '100%', maxWidth: '350px', height: '200px', objectFit: 'cover', borderRadius: '16px', marginBottom: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
-          
-          <h2 style={{ fontSize: '2rem', marginBottom: '15px', textAlign: 'center', background: 'linear-gradient(to right, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            {currentAd.title}
-          </h2>
-          <p style={{ fontSize: '1.1rem', color: '#cbd5e1', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6', marginBottom: '30px' }}>
-            {currentAd.desc}
-          </p>
-          
-          <button 
-            className="btn"
-            style={{ 
-              padding: '16px 32px', fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '30px', 
-              background: 'linear-gradient(135deg, var(--primary) 0%, #9C27B0 100%)', color: 'white', border: 'none',
-              boxShadow: '0 8px 20px rgba(0,0,0,0.3)', width: '100%', maxWidth: '300px'
-            }}
-            onClick={() => {
-              setShowAd(false);
-              setPaywallFeature({ title: currentAd.type === 'trezam' ? 'Trezam' : 'Mundial Estampas PRO', description: currentAd.desc });
-            }}
-          >
-            {currentAd.cta}
-          </button>
+          {currentAd.type === 'adsense' ? (
+            <div style={{ width: '100%', maxWidth: '400px', minHeight: '300px', backgroundColor: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '16px', overflow: 'hidden', marginBottom: '20px' }}>
+              <AdSenseComponent />
+            </div>
+          ) : (
+            <>
+              <img src={currentAd.img} alt="Ad" style={{ width: '100%', maxWidth: '350px', height: '200px', objectFit: 'cover', borderRadius: '16px', marginBottom: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
+              <h2 style={{ fontSize: '2rem', marginBottom: '15px', textAlign: 'center', background: 'linear-gradient(to right, #60a5fa, #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {currentAd.title}
+              </h2>
+              <p style={{ fontSize: '1.1rem', color: '#cbd5e1', textAlign: 'center', maxWidth: '400px', lineHeight: '1.6', marginBottom: '30px' }}>
+                {currentAd.desc}
+              </p>
+              <button 
+                className="btn"
+                style={{ 
+                  padding: '16px 32px', fontSize: '1.2rem', fontWeight: 'bold', borderRadius: '30px', 
+                  background: 'linear-gradient(135deg, var(--primary) 0%, #9C27B0 100%)', color: 'white', border: 'none',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.3)', width: '100%', maxWidth: '300px'
+                }}
+                onClick={() => {
+                  setShowAd(false);
+                  setPaywallFeature({ title: currentAd.type === 'trezam' ? 'Trezam' : 'Mundial Estampas PRO', description: currentAd.desc });
+                }}
+              >
+                {currentAd.cta}
+              </button>
+            </>
+          )}
+
+          {currentAd.type === 'adsense' && (
+            <button 
+              className="btn"
+              style={{ 
+                marginTop: '10px',
+                padding: '12px 24px', fontSize: '1rem', fontWeight: 'bold', borderRadius: '30px', 
+                background: 'transparent', color: '#FFD700', border: '1px solid #FFD700'
+              }}
+              onClick={() => {
+                setShowAd(false);
+                setPaywallFeature({ title: 'Mundial Estampas PRO', description: 'Elimina todos los anuncios y obtén acceso a funciones exclusivas.' });
+              }}
+            >
+              <Crown size={16} style={{ marginRight: '8px' }} /> Remover anuncios
+            </button>
+          )}
           
           <div style={{ marginTop: '30px', fontSize: '0.8rem', color: '#64748b' }}>Anuncio patrocinado</div>
         </div>
