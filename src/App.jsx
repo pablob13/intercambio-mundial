@@ -322,22 +322,31 @@ const AdBanner = ({ isPro, format = 'horizontal' }) => {
 };
 
 const AdSenseComponent = () => {
+  const adRef = useRef(null);
+
   useEffect(() => {
-    try {
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (e) {
-      console.error("AdSense error", e);
+    if (adRef.current && !adRef.current.firstChild) {
+      const ins = document.createElement('ins');
+      ins.className = 'adsbygoogle';
+      ins.style.display = 'block';
+      ins.style.minWidth = '300px';
+      ins.style.minHeight = '250px';
+      ins.setAttribute('data-ad-client', 'ca-pub-7619118541209092');
+      ins.setAttribute('data-ad-slot', '7436867422');
+      ins.setAttribute('data-ad-format', 'auto');
+      ins.setAttribute('data-full-width-responsive', 'true');
+      
+      adRef.current.appendChild(ins);
+
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.error("AdSense error", e);
+      }
     }
   }, []);
 
-  return (
-    <ins className="adsbygoogle"
-         style={{ display: 'block', minWidth: '300px', minHeight: '250px' }}
-         data-ad-client="ca-pub-7619118541209092"
-         data-ad-slot="7436867422"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-  );
+  return <div ref={adRef} style={{ width: '100%', minHeight: '250px', display: 'flex', justifyContent: 'center' }} />;
 };
 
 const ProPaywall = ({ featureName, description, onUpgrade }) => (
